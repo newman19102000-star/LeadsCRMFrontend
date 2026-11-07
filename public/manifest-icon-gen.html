@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PWA Icon Generator</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 50px auto; padding: 20px; }
+        canvas { border: 1px solid #ddd; margin: 10px 0; }
+        button { padding: 10px 20px; background: #4F46E5; color: white; border: none; cursor: pointer; margin: 5px; }
+        .icon-preview { display: inline-block; margin: 10px; text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>PWA Icon Generator</h1>
+    <p>This will generate icons for your PWA. Right-click each canvas and "Save image as..."</p>
+    
+    <div id="icons"></div>
+    
+    <script>
+        const sizes = [64, 192, 512];
+        const container = document.getElementById('icons');
+        
+        sizes.forEach(size => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'icon-preview';
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#4F46E5');
+            gradient.addColorStop(1, '#6366F1');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Add "CRM" text
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${size * 0.3}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('CRM', size / 2, size / 2);
+            
+            const label = document.createElement('p');
+            label.textContent = `pwa-${size}x${size}.png`;
+            
+            wrapper.appendChild(canvas);
+            wrapper.appendChild(label);
+            container.appendChild(wrapper);
+        });
+        
+        // Maskable icon (with safe zone)
+        const maskWrapper = document.createElement('div');
+        maskWrapper.className = 'icon-preview';
+        
+        const maskCanvas = document.createElement('canvas');
+        maskCanvas.width = 512;
+        maskCanvas.height = 512;
+        const maskCtx = maskCanvas.getContext('2d');
+        
+        // White background
+        maskCtx.fillStyle = '#4F46E5';
+        maskCtx.fillRect(0, 0, 512, 512);
+        
+        // Safe zone circle (80% of canvas)
+        maskCtx.fillStyle = 'white';
+        maskCtx.font = 'bold 150px Arial';
+        maskCtx.textAlign = 'center';
+        maskCtx.textBaseline = 'middle';
+        maskCtx.fillText('CRM', 256, 256);
+        
+        const maskLabel = document.createElement('p');
+        maskLabel.textContent = 'maskable-icon-512x512.png';
+        
+        maskWrapper.appendChild(maskCanvas);
+        maskWrapper.appendChild(maskLabel);
+        container.appendChild(maskWrapper);
+    </script>
+</body>
+</html>
