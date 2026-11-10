@@ -377,14 +377,14 @@ export default function App() {
     const { type, lead } = activeModal;
 
     if (type === 'add_task') {
-      await crmApi.changeStage(lead.id, {
-        stage: formState.stage,
-        stageReason: formState.stageReason,
+      await crmApi.addTask(lead.id, {
+        assignedById: currentUser.id,
+        assignedToId: Number(formState.teamMemberId),
+        scheduleDate: new Date(formState.scheduleDate).toISOString(),
+        title: formState.title || `Followup Task With ${lead.name}`,
         remark: formState.remark,
         activityType: formState.activityType,
-        nextFollowUpDate: new Date(formState.scheduleDate).toISOString(),
-        agentId: Number(formState.teamMemberId),
-        assignNextTaskToId: Number(formState.teamMemberId)
+        stage: formState.stage
       });
     } else if (type === 'transfer') {
       await crmApi.transferLead(lead.id, {
