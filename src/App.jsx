@@ -469,41 +469,6 @@ export default function App() {
               Sign In to Workspace
             </button>
           </form>
-                  placeholder="e.g. Vikram Mehta"
-                  value={registerCompanyForm.adminName}
-                  onChange={(e) => setRegisterCompanyForm({ ...registerCompanyForm, adminName: e.target.value })}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Admin Email</label>
-                <input
-                  type="email"
-                  required
-                  placeholder="vikram@prestige.com"
-                  value={registerCompanyForm.adminEmail}
-                  onChange={(e) => setRegisterCompanyForm({ ...registerCompanyForm, adminEmail: e.target.value })}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Admin Password</label>
-                <input
-                  type="password"
-                  required
-                  value={registerCompanyForm.password}
-                  onChange={(e) => setRegisterCompanyForm({ ...registerCompanyForm, password: e.target.value })}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg transition"
-              >
-                Create Isolated Client Tenant
-              </button>
-            </form>
-          )}
         </div>
       </div>
     );
