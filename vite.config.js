@@ -11,8 +11,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Buildesk CRM - Real Estate Lead Management',
-        short_name: 'Buildesk CRM',
+        name: 'Real Estate CRM - Lead Management',
+        short_name: 'RE CRM',
         description: 'Manage your real estate leads from Facebook Lead Ads with multi-tenant support',
         theme_color: '#4F46E5',
         background_color: '#0F172A',

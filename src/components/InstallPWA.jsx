@@ -90,7 +90,7 @@ export default function InstallPWA() {
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-gray-900 text-lg mb-1">
-                  Install Buildesk CRM
+                  Install CRM App
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
                   {isIOS 

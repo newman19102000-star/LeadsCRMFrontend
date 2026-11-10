@@ -18,7 +18,7 @@ export default function App() {
   });
   const [authMode, setAuthMode] = useState('login'); // 'login' | 'register_company'
   const [authError, setAuthError] = useState('');
-  const [loginForm, setLoginForm] = useState({ email: 'admin@buildesk.com', password: 'Admin@123' });
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [registerCompanyForm, setRegisterCompanyForm] = useState({
     companyName: '',
     adminName: '',
@@ -429,26 +429,11 @@ export default function App() {
         <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-7">
           <div className="flex items-center gap-2.5 font-bold text-xl text-slate-900 mb-1">
             <Building2 className="w-6 h-6 text-indigo-600" />
-            <span>Buildesk Multi-Tenant CRM</span>
+            <span>CRM Portal</span>
           </div>
           <p className="text-xs text-slate-500 mb-5">
-            Role-Based Lead Engine for Real Estate Developers & Channel Partners
+            Lead Management System for Real Estate
           </p>
-
-          <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-lg mb-5 text-xs font-semibold">
-            <button
-              onClick={() => { setAuthMode('login'); setAuthError(''); }}
-              className={`py-2 rounded-md transition ${authMode === 'login' ? 'bg-white shadow text-indigo-600' : 'text-slate-600'}`}
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => { setAuthMode('register_company'); setAuthError(''); }}
-              className={`py-2 rounded-md transition ${authMode === 'register_company' ? 'bg-white shadow text-indigo-600' : 'text-slate-600'}`}
-            >
-              New Client Company
-            </button>
-          </div>
 
           {authError && (
             <div className="mb-4 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
@@ -456,73 +441,34 @@ export default function App() {
             </div>
           )}
 
-          {authMode === 'login' ? (
-            <form onSubmit={handleLoginSubmit} className="space-y-3.5 text-sm">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Work Email</label>
-                <input
-                  type="email"
-                  required
-                  value={loginForm.email}
-                  onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>
-                <input
-                  type="password"
-                  required
-                  value={loginForm.password}
-                  onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition"
-              >
-                Sign In to Workspace
-              </button>
-
-              <div className="pt-3 border-t border-slate-200 text-xs text-slate-500 space-y-1.5">
-                <div className="font-semibold text-slate-700">Quick Test Accounts:</div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setLoginForm({ email: 'admin@buildesk.com', password: 'Admin@123' })}
-                    className="px-2.5 py-1 bg-slate-100 hover:bg-indigo-50 text-slate-700 rounded border text-[11px]"
-                  >
-                    Company Admin (Full Control)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLoginForm({ email: 'priya@buildesk.com', password: 'Worker@123' })}
-                    className="px-2.5 py-1 bg-slate-100 hover:bg-indigo-50 text-slate-700 rounded border text-[11px]"
-                  >
-                    Worker (Assigned Leads Only)
-                  </button>
-                </div>
-              </div>
-            </form>
-          ) : (
-            <form onSubmit={handleRegisterCompanySubmit} className="space-y-3 text-sm">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Client Company Name</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Prestige Estates Pvt Ltd"
-                  value={registerCompanyForm.companyName}
-                  onChange={(e) => setRegisterCompanyForm({ ...registerCompanyForm, companyName: e.target.value })}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Admin Full Name</label>
-                <input
-                  type="text"
-                  required
+          <form onSubmit={handleLoginSubmit} className="space-y-3.5 text-sm">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Work Email</label>
+              <input
+                type="email"
+                required
+                value={loginForm.email}
+                onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+              <input
+                type="password"
+                required
+                value={loginForm.password}
+                onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition"
+            >
+              Sign In to Workspace
+            </button>
+          </form>
                   placeholder="e.g. Vikram Mehta"
                   value={registerCompanyForm.adminName}
                   onChange={(e) => setRegisterCompanyForm({ ...registerCompanyForm, adminName: e.target.value })}
@@ -571,7 +517,7 @@ export default function App() {
           <div>
             <div className="flex items-center gap-2 font-bold text-base tracking-tight">
               <Building2 className="w-5 h-5 text-indigo-400" />
-              <span>{currentUser.companyName || 'Buildesk CRM'}</span>
+              <span>{currentUser.companyName || 'CRM'}</span>
             </div>
             <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
               <span>{currentUser.name}</span> •
@@ -1408,7 +1354,7 @@ export default function App() {
           <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
             <h3 className="font-bold text-base text-slate-900 mb-1">Link New Facebook Page</h3>
             <p className="text-xs text-slate-500 mb-4">
-              Paste the Page ID and Permanent Page Access Token. Buildesk will automatically subscribe this Page to the leadgen webhook.
+              Paste the Page ID and Permanent Page Access Token. The system will automatically subscribe this Page to the leadgen webhook.
             </p>
             <form
               onSubmit={async (e) => {
