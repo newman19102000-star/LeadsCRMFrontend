@@ -477,25 +477,25 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       {/* Top Navbar */}
-      <header className="bg-slate-900 text-white px-6 py-3 flex flex-wrap items-center justify-between gap-4 shadow">
-        <div className="flex items-center gap-6">
+      <header className="bg-slate-900 text-white px-3 sm:px-6 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 shadow">
+        <div className="flex items-center gap-3 sm:gap-6 w-full sm:w-auto">
           <div>
-            <div className="flex items-center gap-2 font-bold text-base tracking-tight">
-              <Building2 className="w-5 h-5 text-indigo-400" />
+            <div className="flex items-center gap-2 font-bold text-sm sm:text-base tracking-tight">
+              <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400" />
               <span>{currentUser.companyName || 'CRM'}</span>
             </div>
-            <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
-              <span>{currentUser.name}</span> •
+            <div className="text-[10px] sm:text-[11px] text-slate-400 flex items-center gap-1.5 flex-wrap">
+              <span className="truncate max-w-[100px] sm:max-w-none">{currentUser.name}</span> •
               <span className="text-indigo-400 font-semibold">{currentUser.accessRole}</span>
               {!isAdmin && (
-                <span className="px-1.5 py-0.2 bg-slate-800 rounded text-[10px] text-amber-300">
+                <span className="px-1.5 py-0.2 bg-slate-800 rounded text-[9px] sm:text-[10px] text-amber-300 whitespace-nowrap">
                   {currentUser.canViewAllCompanyLeads ? 'Scope: All Company Leads' : 'Scope: Assigned to Me Only'}
                 </span>
               )}
             </div>
           </div>
 
-          <nav className="flex gap-1.5">
+          <nav className="hidden sm:flex gap-1.5">
             <button
               onClick={() => setActivePage('leads')}
               className={`px-3.5 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition ${
@@ -536,40 +536,84 @@ export default function App() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <span className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium ${
+        {/* Mobile Navigation */}
+        <nav className="flex sm:hidden gap-1 w-full overflow-x-auto pb-1">
+          <button
+            onClick={() => setActivePage('leads')}
+            className={`px-2.5 py-1.5 rounded-md text-[10px] font-medium flex items-center gap-1 transition whitespace-nowrap ${
+              activePage === 'leads' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" /> Leads
+          </button>
+          <button
+            onClick={() => setActivePage('tasks')}
+            className={`px-2.5 py-1.5 rounded-md text-[10px] font-medium flex items-center gap-1 transition whitespace-nowrap ${
+              activePage === 'tasks' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
+            }`}
+          >
+            <CheckSquare className="w-3.5 h-3.5" /> Tasks
+          </button>
+
+          {isAdmin && (
+            <>
+              <button
+                onClick={() => setActivePage('campaigns')}
+                className={`px-2.5 py-1.5 rounded-md text-[10px] font-medium flex items-center gap-1 transition whitespace-nowrap ${
+                  activePage === 'campaigns' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" /> Campaigns
+              </button>
+              <button
+                onClick={() => setActivePage('team')}
+                className={`px-2.5 py-1.5 rounded-md text-[10px] font-medium flex items-center gap-1 transition whitespace-nowrap ${
+                  activePage === 'team' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
+                }`}
+              >
+                <Lock className="w-3.5 h-3.5" /> Team
+              </button>
+            </>
+          )}
+        </nav>
+
+        <div className="flex items-center gap-1.5 sm:gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
+          <span className={`flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs px-2 sm:px-2.5 py-1 rounded-full font-medium ${
             wsStatus === 'Connected'
               ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
               : 'bg-amber-950 text-amber-400 border border-amber-800'
           }`}>
-            <Wifi className="w-3.5 h-3.5" />
-            {wsStatus === 'Connected' ? 'Live Sync Active' : wsStatus}
+            <Wifi className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span className="hidden sm:inline">{wsStatus === 'Connected' ? 'Live Sync Active' : wsStatus}</span>
+            <span className="sm:hidden">{wsStatus === 'Connected' ? 'Live' : 'Off'}</span>
           </span>
           <button
             onClick={refreshAll}
-            className="flex items-center gap-1.5 text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded border border-slate-700"
+            className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs bg-slate-800 hover:bg-slate-700 px-2 sm:px-3 py-1.5 rounded border border-slate-700"
           >
-            <RefreshCw className="w-3.5 h-3.5" /> Refresh
+            <RefreshCw className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span className="hidden sm:inline">Refresh</span>
           </button>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1 text-xs bg-rose-950/80 hover:bg-rose-900 text-rose-300 px-3 py-1.5 rounded border border-rose-800"
+            className="flex items-center gap-1 text-[10px] sm:text-xs bg-rose-950/80 hover:bg-rose-900 text-rose-300 px-2 sm:px-3 py-1.5 rounded border border-rose-800"
           >
-            <LogOut className="w-3.5 h-3.5" /> Logout
+            <LogOut className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span className="hidden sm:inline">Logout</span>
           </button>
         </div>
       </header>
 
-      <main className="space-y-6">
+      <main className="space-y-4 sm:space-y-6">
         {activePage === 'leads' ? (
-          <div className="px-6 py-6 space-y-6">
+          <div className="px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
             {/* 1. ALL LEADS & TODAY'S LEADS SUMMARY TABS */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-xs">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+              <div className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4 shadow-xs overflow-hidden">
+                <h2 className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 sm:mb-3">
                   1. {isAdmin || currentUser.canViewAllCompanyLeads ? 'All Company Leads' : 'My Assigned Leads'}
                 </h2>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
                   {[
                     { key: 'all_total', label: 'Total', val: counts?.allLeads?.total ?? 0 },
                     { key: 'all_fresh_untouched', label: 'Fresh Untouched', val: counts?.allLeads?.freshUntouched ?? 0 },
@@ -579,24 +623,24 @@ export default function App() {
                     <button
                       key={item.key}
                       onClick={() => setActiveLeadTab(item.key)}
-                      className={`p-3 rounded-lg border text-left transition ${
+                      className={`p-2 sm:p-3 rounded-lg border text-left transition min-h-[60px] sm:min-h-0 ${
                         activeLeadTab === item.key
                           ? 'border-indigo-600 bg-indigo-50/70 ring-1 ring-indigo-600'
                           : 'border-slate-200 hover:bg-slate-50'
                       }`}
                     >
-                      <div className="text-2xl font-bold text-slate-900">{item.val}</div>
-                      <div className="text-xs font-medium text-slate-600 mt-0.5">{item.label}</div>
+                      <div className="text-lg sm:text-2xl font-bold text-slate-900">{item.val}</div>
+                      <div className="text-[9px] sm:text-xs font-medium text-slate-600 mt-0.5 line-clamp-2 leading-tight">{item.label}</div>
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-xs">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
+              <div className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4 shadow-xs overflow-hidden">
+                <h2 className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 sm:mb-3">
                   2. Today's Leads (IST)
                 </h2>
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 sm:gap-2">
                   {[
                     { key: 'today_leads', label: 'Leads', val: counts?.todaysLeads?.leads ?? 0 },
                     { key: 'today_fresh', label: 'Fresh Leads', val: counts?.todaysLeads?.freshLeads ?? 0 },
@@ -614,14 +658,14 @@ export default function App() {
                           setActiveLeadTab(item.key);
                         }
                       }}
-                      className={`p-3 rounded-lg border text-left transition ${
+                      className={`p-2 sm:p-3 rounded-lg border text-left transition min-h-[60px] sm:min-h-0 ${
                         activeLeadTab === item.key
                           ? 'border-indigo-600 bg-indigo-50/70 ring-1 ring-indigo-600'
                           : 'border-slate-200 hover:bg-slate-50'
                       }`}
                     >
-                      <div className="text-2xl font-bold text-slate-900">{item.val}</div>
-                      <div className="text-xs font-medium text-slate-600 mt-0.5">{item.label}</div>
+                      <div className="text-lg sm:text-2xl font-bold text-slate-900">{item.val}</div>
+                      <div className="text-[9px] sm:text-xs font-medium text-slate-600 mt-0.5 line-clamp-2 leading-tight">{item.label}</div>
                     </button>
                   ))}
                 </div>
@@ -629,9 +673,9 @@ export default function App() {
             </div>
 
             {/* Search & Active Filter Bar */}
-            <div className="bg-white rounded-lg border border-slate-200 px-4 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold text-slate-700">
+            <div className="bg-white rounded-lg border border-slate-200 px-3 sm:px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-xs sm:text-sm font-semibold text-slate-700">
                   Showing Filter: <span className="text-indigo-600 uppercase">{activeLeadTab.replaceAll('_', ' ')}</span>
                 </span>
                 <span className="text-xs bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full font-medium">
@@ -643,19 +687,19 @@ export default function App() {
                   e.preventDefault();
                   loadLeads(activeLeadTab, searchQuery);
                 }}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 w-full sm:w-auto"
               >
-                <div className="relative">
+                <div className="relative flex-1 sm:flex-initial">
                   <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                   <input
                     type="text"
                     placeholder="Search name or mobile..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 pr-3 py-1.5 text-sm border border-slate-300 rounded-md focus:outline-none focus:border-indigo-500"
+                    className="w-full pl-9 pr-3 py-1.5 text-sm border border-slate-300 rounded-md focus:outline-none focus:border-indigo-500"
                   />
                 </div>
-                <button type="submit" className="bg-indigo-600 text-white text-sm px-3 py-1.5 rounded-md hover:bg-indigo-700">
+                <button type="submit" className="bg-indigo-600 text-white text-sm px-3 py-1.5 rounded-md hover:bg-indigo-700 whitespace-nowrap">
                   Search
                 </button>
               </form>
@@ -820,8 +864,8 @@ export default function App() {
           </div>
         ) : activePage === 'tasks' ? (
           /* TASKS PAGE */
-          <div className="px-6 py-6 space-y-6">
-            <div className="grid grid-cols-4 gap-4">
+          <div className="px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
               {[
                 { key: 'today', label: "Today's Task", val: tasksData.counts?.todaysTask ?? 0 },
                 { key: 'upcoming', label: 'Upcoming Task', val: tasksData.counts?.upcomingTask ?? 0 },
@@ -831,14 +875,14 @@ export default function App() {
                 <button
                   key={t.key}
                   onClick={() => setActiveTaskTab(t.key)}
-                  className={`p-4 rounded-lg border text-left bg-white transition ${
+                  className={`p-2.5 sm:p-4 rounded-lg border text-left bg-white transition min-h-[60px] sm:min-h-0 ${
                     activeTaskTab === t.key
                       ? 'border-indigo-600 ring-1 ring-indigo-600 bg-indigo-50/40'
                       : 'border-slate-200 hover:bg-slate-50'
                   }`}
                 >
-                  <div className="text-2xl font-bold text-slate-900">{t.val}</div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mt-1">{t.label}</div>
+                  <div className="text-lg sm:text-2xl font-bold text-slate-900">{t.val}</div>
+                  <div className="text-[9px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 mt-0.5 sm:mt-1 line-clamp-2 leading-tight">{t.label}</div>
                 </button>
               ))}
             </div>
@@ -931,23 +975,23 @@ export default function App() {
           </div>
         ) : activePage === 'campaigns' ? (
           /* CAMPAIGNS & CONNECTED FACEBOOK PAGES WORKSPACE */
-          <div className="px-6 py-6 space-y-5">
-            <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-xs space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-5">
+            <div className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4 shadow-xs space-y-3 sm:space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
                 <div>
-                  <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                    <ShieldCheck className="w-5 h-5 text-indigo-600" />
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
                     Connected Facebook Pages ({(metaPagesInfo.pages || []).length})
                   </h2>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-[11px] sm:text-xs text-slate-500 mt-1">
                     Connect multiple Facebook Pages for {currentUser.companyName}. Leads from these pages route exclusively to your company's agents.
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                   <button
                     onClick={handleFacebookOAuthConnect}
                     disabled={connectingOAuth}
-                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-md flex items-center gap-1.5 shadow-xs"
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-[11px] sm:text-xs font-semibold px-3 sm:px-3.5 py-2 rounded-md flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
                   >
                     <Link2 className="w-3.5 h-3.5" />
                     {connectingOAuth ? 'Connecting...' : 'Connect with Facebook (OAuth)'}
@@ -957,14 +1001,14 @@ export default function App() {
                       setManualPageForm({ pageId: '', pageName: '', pageAccessToken: '', defaultProjectId: '' });
                       setShowManualPageModal(true);
                     }}
-                    className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-3.5 py-2 rounded-md flex items-center gap-1.5"
+                    className="bg-slate-900 hover:bg-slate-800 text-white text-[11px] sm:text-xs font-semibold px-3 sm:px-3.5 py-2 rounded-md flex items-center justify-center gap-1.5 whitespace-nowrap"
                   >
                     <Plus className="w-3.5 h-3.5" /> Link Page via Token
                   </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3">
                 {(metaPagesInfo.pages || []).map((p) => (
                   <div key={p.id} className="border border-slate-200 rounded-lg p-3.5 bg-slate-50/60 flex flex-col justify-between">
                     <div>
@@ -1010,20 +1054,20 @@ export default function App() {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-slate-200 p-4 flex flex-wrap items-center justify-between gap-4">
+            <div className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
               <div>
-                <h2 className="text-base font-bold text-slate-900">Connected Facebook Campaigns & Instant Forms</h2>
-                <p className="text-xs text-slate-500">
+                <h2 className="text-sm sm:text-base font-bold text-slate-900">Connected Facebook Campaigns & Instant Forms</h2>
+                <p className="text-[11px] sm:text-xs text-slate-500 mt-1">
                   Map Facebook Campaigns to CRM Projects, configure automatic Pre-Sales routing, and track Cost-Per-Lead (CPL) & Site Visits.
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                 <input
                   type="text"
                   placeholder="Optional: Ad Account ID (act_...)"
                   value={adAccountInput}
                   onChange={(e) => setAdAccountInput(e.target.value)}
-                  className="text-xs border border-slate-300 rounded-md px-3 py-2 w-56"
+                  className="text-xs border border-slate-300 rounded-md px-3 py-2 w-full sm:w-56"
                 />
                 <button
                   disabled={syncingCampaigns}
@@ -1036,10 +1080,10 @@ export default function App() {
                       setSyncingCampaigns(false);
                     }
                   }}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-md flex items-center gap-1.5"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 sm:px-4 py-2 rounded-md flex items-center justify-center gap-1.5 whitespace-nowrap"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${syncingCampaigns ? 'animate-spin' : ''}`} />
-                  {syncingCampaigns ? 'Syncing with Meta...' : 'Sync Campaigns & Forms'}
+                  {syncingCampaigns ? 'Syncing...' : 'Sync Campaigns & Forms'}
                 </button>
               </div>
             </div>
@@ -1127,10 +1171,10 @@ export default function App() {
           </div>
         ) : (
           /* TEAM & ACCESS CONTROL WORKSPACE (ADMIN ONLY) */
-          <div className="px-6 py-6 grid grid-cols-1 lg:grid-cols-3 gap-5">
-            <div className="bg-white rounded-lg border border-slate-200 p-5 shadow-xs">
-              <h2 className="text-base font-bold text-slate-900 mb-1">Add Company User / Worker</h2>
-              <p className="text-xs text-slate-500 mb-4">
+          <div className="px-3 sm:px-6 py-4 sm:py-6 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
+            <div className="bg-white rounded-lg border border-slate-200 p-4 sm:p-5 shadow-xs">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 mb-1">Add Company User / Worker</h2>
+              <p className="text-[11px] sm:text-xs text-slate-500 mb-3 sm:mb-4">
                 Create Pre-Sales, Sales, or Sourcing accounts for <strong>{currentUser.companyName}</strong> and configure their lead visibility scope.
               </p>
               <form
@@ -1158,7 +1202,7 @@ export default function App() {
                     placeholder="e.g. Neha Kulkarni"
                     value={newUserForm.name}
                     onChange={(e) => setNewUserForm({ ...newUserForm, name: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
                   />
                 </div>
                 <div>
@@ -1169,7 +1213,7 @@ export default function App() {
                     placeholder="neha@company.com"
                     value={newUserForm.email}
                     onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
                   />
                 </div>
                 <div>
@@ -1179,7 +1223,7 @@ export default function App() {
     placeholder="e.g. +91-9820011223"
     value={newUserForm.phone}
     onChange={(e) => setNewUserForm({ ...newUserForm, phone: e.target.value })}
-    className="w-full border rounded px-3 py-2 font-mono"
+    className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-mono"
   />
 </div>
                 <div>
@@ -1190,16 +1234,16 @@ export default function App() {
                     placeholder="••••••••"
                     value={newUserForm.password}
                     onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Department Role</label>
                     <select
                       value={newUserForm.departmentRole}
                       onChange={(e) => setNewUserForm({ ...newUserForm, departmentRole: e.target.value })}
-                      className="w-full border rounded px-3 py-2"
+                      className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
                     >
                       <option value="PreSales">Pre-Sales (Round-Robin)</option>
                       <option value="Sales">Sales (Closing)</option>
@@ -1211,7 +1255,7 @@ export default function App() {
                     <select
                       value={newUserForm.accessRole}
                       onChange={(e) => setNewUserForm({ ...newUserForm, accessRole: e.target.value })}
-                      className="w-full border rounded px-3 py-2"
+                      className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
                     >
                       <option value="Worker">Worker</option>
                       <option value="CompanyAdmin">Company Admin</option>
@@ -1219,36 +1263,38 @@ export default function App() {
                   </div>
                 </div>
                 {newUserForm.accessRole === 'Worker' && (
-                  <label className="flex items-center gap-2 pt-1">
+                  <label className="flex items-start sm:items-center gap-2 pt-1">
                     <input
                       type="checkbox"
                       checked={newUserForm.canViewAllCompanyLeads}
                       onChange={(e) => setNewUserForm({ ...newUserForm, canViewAllCompanyLeads: e.target.checked })}
+                      className="mt-0.5 sm:mt-0"
                     />
-                    <span className="text-slate-700 font-medium">
+                    <span className="text-slate-700 font-medium text-xs sm:text-sm">
                       Allow this worker to view ALL company leads (unchecked = only leads assigned to them)
                     </span>
                   </label>
                 )}
                 <button
                   type="submit"
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-md transition"
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 sm:py-2.5 rounded-md transition text-sm"
                 >
                   + Create Team Member
                 </button>
               </form>
             </div>
 
-            <div className="lg:col-span-2 bg-white rounded-lg border border-slate-200 shadow-xs overflow-x-auto">
-              <div className="p-4 border-b border-slate-200">
-                <h2 className="text-base font-bold text-slate-900">
+            <div className="lg:col-span-2 bg-white rounded-lg border border-slate-200 shadow-xs">
+              <div className="p-3 sm:p-4 border-b border-slate-200">
+                <h2 className="text-sm sm:text-base font-bold text-slate-900">
                   {currentUser.companyName} — Team Directory & Data Visibility Scopes
                 </h2>
-                <p className="text-xs text-slate-500">
+                <p className="text-[11px] sm:text-xs text-slate-500 mt-1">
                   Toggle whether each Worker can view the entire company lead pool or strictly leads & tasks assigned to them.
                 </p>
               </div>
-              <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-[10px] sm:text-xs whitespace-nowrap">
                 <thead>
                   <tr className="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200 uppercase">
                     <th className="py-3 px-3">ID</th>
@@ -1308,6 +1354,7 @@ export default function App() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           </div>
         )}
@@ -1315,10 +1362,10 @@ export default function App() {
 
       {/* Manual Connect Facebook Page Modal */}
       {showManualPageModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
-            <h3 className="font-bold text-base text-slate-900 mb-1">Link New Facebook Page</h3>
-            <p className="text-xs text-slate-500 mb-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-4 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="font-bold text-sm sm:text-base text-slate-900 mb-1">Link New Facebook Page</h3>
+            <p className="text-[11px] sm:text-xs text-slate-500 mb-3 sm:mb-4">
               Paste the Page ID and Permanent Page Access Token. The system will automatically subscribe this Page to the leadgen webhook.
             </p>
             <form
@@ -1333,7 +1380,7 @@ export default function App() {
                 setShowManualPageModal(false);
                 await loadCampaignsAndPages();
               }}
-              className="space-y-3 text-xs"
+              className="space-y-2.5 sm:space-y-3 text-xs"
             >
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Facebook Page Name</label>
@@ -1343,7 +1390,7 @@ export default function App() {
                   placeholder="e.g. Skyline Luxury Residences"
                   value={manualPageForm.pageName}
                   onChange={(e) => setManualPageForm({ ...manualPageForm, pageName: e.target.value })}
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
                 />
               </div>
               <div>
@@ -1354,7 +1401,7 @@ export default function App() {
                   placeholder="e.g. 924782454049982"
                   value={manualPageForm.pageId}
                   onChange={(e) => setManualPageForm({ ...manualPageForm, pageId: e.target.value })}
-                  className="w-full border rounded px-3 py-2 font-mono"
+                  className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-mono"
                 />
               </div>
               <div>
@@ -1365,7 +1412,7 @@ export default function App() {
                   placeholder="EAA..."
                   value={manualPageForm.pageAccessToken}
                   onChange={(e) => setManualPageForm({ ...manualPageForm, pageAccessToken: e.target.value })}
-                  className="w-full border rounded px-3 py-2 font-mono"
+                  className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-mono"
                 />
               </div>
               <div>
@@ -1373,7 +1420,7 @@ export default function App() {
                 <select
                   value={manualPageForm.defaultProjectId}
                   onChange={(e) => setManualPageForm({ ...manualPageForm, defaultProjectId: e.target.value })}
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
                 >
                   <option value="">-- Use Campaign Mapping --</option>
                   {(lookups.projects || []).map(p => (
@@ -1381,11 +1428,11 @@ export default function App() {
                   ))}
                 </select>
               </div>
-              <div className="flex justify-end gap-2 pt-3 border-t">
-                <button type="button" onClick={() => setShowManualPageModal(false)} className="px-4 py-1.5 border rounded">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-3 border-t">
+                <button type="button" onClick={() => setShowManualPageModal(false)} className="px-4 py-2 border rounded text-sm">
                   Cancel
                 </button>
-                <button type="submit" className="px-4 py-1.5 bg-indigo-600 text-white rounded font-semibold">
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded font-semibold text-sm">
                   Connect & Subscribe Page
                 </button>
               </div>
@@ -1396,21 +1443,21 @@ export default function App() {
 
       {/* MODAL FOR ROW ACTIONS */}
       {activeModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b pb-3 mb-4">
-              <h3 className="font-bold text-base uppercase tracking-wide text-slate-800">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-xl max-w-lg w-full p-4 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b pb-2 sm:pb-3 mb-3 sm:mb-4">
+              <h3 className="font-bold text-sm sm:text-base uppercase tracking-wide text-slate-800 truncate pr-2">
                 {activeModal.type.replaceAll('_', ' ')} — {activeModal.lead.name}
               </h3>
-              <button onClick={() => setActiveModal(null)} className="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+              <button onClick={() => setActiveModal(null)} className="text-slate-400 hover:text-slate-600 font-bold text-xl shrink-0">✕</button>
             </div>
 
             {activeModal.type !== 'view' && (
-              <form onSubmit={submitModal} className="space-y-3 text-sm">
+              <form onSubmit={submitModal} className="space-y-2.5 sm:space-y-3 text-xs sm:text-sm">
                 {activeModal.type === 'add_task' && (
                   <>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Lead Stage</label>
+                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Lead Stage</label>
                       <select
                         value={formState.stage}
                         onChange={(e) => {
@@ -1421,30 +1468,30 @@ export default function App() {
                             stageReason: st?.allowedReasons?.[0] || ''
                           });
                         }}
-                        className="w-full border rounded px-3 py-2"
+                        className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
                       >
                         {(lookups.stages || []).map(s => <option key={s.stage} value={s.stage}>{s.stage}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Stage Reason</label>
+                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Stage Reason</label>
                       <select
                         value={formState.stageReason}
                         onChange={(e) => setFormState({ ...formState, stageReason: e.target.value })}
-                        className="w-full border rounded px-3 py-2"
+                        className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
                       >
                         {((lookups.stages || []).find(s => s.stage === formState.stage)?.allowedReasons || []).map(r => (
                           <option key={r} value={r}>{r}</option>
                         ))}
                       </select>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-xs font-semibold text-slate-600 mb-1">Activity Type</label>
+                        <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Activity Type</label>
                         <select
                           value={formState.activityType}
                           onChange={(e) => setFormState({ ...formState, activityType: e.target.value })}
-                          className="w-full border rounded px-3 py-2"
+                          className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
                         >
                           <option value="CALL">CALL</option>
                           <option value="SITE VISIT">SITE VISIT</option>
@@ -1453,32 +1500,32 @@ export default function App() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-slate-600 mb-1">Schedule Date & Time</label>
+                        <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Schedule Date & Time</label>
                         <input
                           type="datetime-local"
                           value={formState.scheduleDate}
                           onChange={(e) => setFormState({ ...formState, scheduleDate: e.target.value })}
-                          className="w-full border rounded px-3 py-2"
+                          className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Assign Task To</label>
+                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Assign Task To</label>
                       <select
                         value={formState.teamMemberId}
                         onChange={(e) => setFormState({ ...formState, teamMemberId: e.target.value })}
-                        className="w-full border rounded px-3 py-2"
+                        className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
                       >
                         {(lookups.teamMembers || []).map(m => <option key={m.id} value={m.id}>{m.name} ({m.role})</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Remark</label>
+                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Remark</label>
                       <textarea
                         rows={2}
                         value={formState.remark}
                         onChange={(e) => setFormState({ ...formState, remark: e.target.value })}
-                        className="w-full border rounded px-3 py-2"
+                        className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
                       />
                     </div>
                   </>
@@ -1487,10 +1534,10 @@ export default function App() {
                 {activeModal.type === 'transfer' && (
                   <>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">New Pre-Sales Agent</label>
+                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">New Pre-Sales Agent</label>
                       <select
                         onChange={(e) => setFormState({ ...formState, preSalesAgentId: e.target.value })}
-                        className="w-full border rounded px-3 py-2"
+                        className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
                       >
                         <option value="">-- Keep Current --</option>
                         {(lookups.teamMembers || []).filter(m => m.role === 'PreSales').map(m => (
@@ -1499,10 +1546,10 @@ export default function App() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">New Sales Agent</label>
+                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">New Sales Agent</label>
                       <select
                         onChange={(e) => setFormState({ ...formState, salesAgentId: e.target.value })}
-                        className="w-full border rounded px-3 py-2"
+                        className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
                       >
                         <option value="">-- Keep Current --</option>
                         {(lookups.teamMembers || []).filter(m => m.role === 'Sales').map(m => (
@@ -1511,12 +1558,12 @@ export default function App() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Transfer Reason</label>
+                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Transfer Reason</label>
                       <input
                         type="text"
                         value={formState.remark}
                         onChange={(e) => setFormState({ ...formState, remark: e.target.value })}
-                        className="w-full border rounded px-3 py-2"
+                        className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
                       />
                     </div>
                   </>
@@ -1525,11 +1572,11 @@ export default function App() {
                 {activeModal.type === 'add_owner' && (
                   <>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Owner Role</label>
+                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Owner Role</label>
                       <select
                         value={formState.ownerRole}
                         onChange={(e) => setFormState({ ...formState, ownerRole: e.target.value })}
-                        className="w-full border rounded px-3 py-2"
+                        className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
                       >
                         <option value="PreSales">Pre-Sales Agent</option>
                         <option value="Sales">Sales Agent</option>
@@ -1537,11 +1584,11 @@ export default function App() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Team Member</label>
+                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Team Member</label>
                       <select
                         value={formState.teamMemberId}
                         onChange={(e) => setFormState({ ...formState, teamMemberId: e.target.value })}
-                        className="w-full border rounded px-3 py-2"
+                        className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
                       >
                         {(lookups.teamMembers || []).map(m => <option key={m.id} value={m.id}>{m.name} ({m.role})</option>)}
                       </select>
@@ -1551,11 +1598,11 @@ export default function App() {
 
                 {activeModal.type === 'remove_owner' && (
                   <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1">Which Owner Role to Remove?</label>
+                    <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Which Owner Role to Remove?</label>
                     <select
                       value={formState.ownerRole}
                       onChange={(e) => setFormState({ ...formState, ownerRole: e.target.value })}
-                      className="w-full border rounded px-3 py-2"
+                      className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
                     >
                       <option value="PreSales">Pre-Sales Agent</option>
                       <option value="Sales">Sales Agent</option>
@@ -1567,11 +1614,11 @@ export default function App() {
 
                 {activeModal.type === 'add_cp' && (
                   <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1">Select Channel Partner</label>
+                    <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Select Channel Partner</label>
                     <select
                       value={formState.channelPartnerId}
                       onChange={(e) => setFormState({ ...formState, channelPartnerId: e.target.value })}
-                      className="w-full border rounded px-3 py-2"
+                      className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
                     >
                       {(lookups.channelPartners || []).map(cp => (
                         <option key={cp.id} value={cp.id}>{cp.firmName} ({cp.contactName})</option>
@@ -1582,11 +1629,11 @@ export default function App() {
 
                 {activeModal.type === 'suggest_property' && (
                   <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1">Select Project to Suggest</label>
+                    <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Select Project to Suggest</label>
                     <select
                       value={formState.projectId}
                       onChange={(e) => setFormState({ ...formState, projectId: e.target.value })}
-                      className="w-full border rounded px-3 py-2"
+                      className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
                     >
                       {(lookups.projects || []).map(p => (
                         <option key={p.id} value={p.id}>{p.name} — {p.subLocation} ({p.priceRange})</option>
@@ -1596,39 +1643,39 @@ export default function App() {
                 )}
 
                 {activeModal.type === 'edit' && (
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Name</label>
-                      <input type="text" value={formState.name} onChange={e => setFormState({ ...formState, name: e.target.value })} className="w-full border rounded px-2.5 py-1.5" />
+                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Name</label>
+                      <input type="text" value={formState.name} onChange={e => setFormState({ ...formState, name: e.target.value })} className="w-full border border-slate-300 rounded px-2.5 py-1.5" />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Primary No</label>
-                      <input type="text" value={formState.primaryNo} onChange={e => setFormState({ ...formState, primaryNo: e.target.value })} className="w-full border rounded px-2.5 py-1.5" />
+                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Primary No</label>
+                      <input type="text" value={formState.primaryNo} onChange={e => setFormState({ ...formState, primaryNo: e.target.value })} className="w-full border border-slate-300 rounded px-2.5 py-1.5" />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Requirement</label>
-                      <input type="text" value={formState.requirement} onChange={e => setFormState({ ...formState, requirement: e.target.value })} className="w-full border rounded px-2.5 py-1.5" />
+                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Requirement</label>
+                      <input type="text" value={formState.requirement} onChange={e => setFormState({ ...formState, requirement: e.target.value })} className="w-full border border-slate-300 rounded px-2.5 py-1.5" />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Sub Location</label>
-                      <input type="text" value={formState.subLocation} onChange={e => setFormState({ ...formState, subLocation: e.target.value })} className="w-full border rounded px-2.5 py-1.5" />
+                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Sub Location</label>
+                      <input type="text" value={formState.subLocation} onChange={e => setFormState({ ...formState, subLocation: e.target.value })} className="w-full border border-slate-300 rounded px-2.5 py-1.5" />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Budget</label>
-                      <input type="text" value={formState.budget} onChange={e => setFormState({ ...formState, budget: e.target.value })} className="w-full border rounded px-2.5 py-1.5" />
+                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Budget</label>
+                      <input type="text" value={formState.budget} onChange={e => setFormState({ ...formState, budget: e.target.value })} className="w-full border border-slate-300 rounded px-2.5 py-1.5" />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Ethnicity</label>
-                      <input type="text" value={formState.ethnicity} onChange={e => setFormState({ ...formState, ethnicity: e.target.value })} className="w-full border rounded px-2.5 py-1.5" />
+                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Ethnicity</label>
+                      <input type="text" value={formState.ethnicity} onChange={e => setFormState({ ...formState, ethnicity: e.target.value })} className="w-full border border-slate-300 rounded px-2.5 py-1.5" />
                     </div>
                   </div>
                 )}
 
-                <div className="flex justify-end gap-2 pt-3 border-t">
-                  <button type="button" onClick={() => setActiveModal(null)} className="px-4 py-1.5 border rounded text-slate-600">
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-3 border-t">
+                  <button type="button" onClick={() => setActiveModal(null)} className="px-4 py-2 border rounded text-slate-600 text-sm">
                     Cancel
                   </button>
-                  <button type="submit" className="px-4 py-1.5 bg-indigo-600 text-white rounded font-medium hover:bg-indigo-700">
+                  <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded font-medium hover:bg-indigo-700 text-sm">
                     Save Changes
                   </button>
                 </div>
