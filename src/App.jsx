@@ -350,6 +350,7 @@ export default function App() {
         try {
           const details = await crmApi.getTask(task.id);
           setSelectedTaskDetails(details);
+          setViewTasksModalOpen(false); // Close the tasks list modal
           setViewTaskModalOpen(true);
         } catch (err) {
           console.error('Failed loading task details:', err);
@@ -367,6 +368,7 @@ export default function App() {
         const outcome = window.prompt('Enter call/visit outcome remark:', task.remark);
         if (outcome !== null) {
           await crmApi.completeTask(task.id, { outcomeRemark: outcome });
+          setViewTasksModalOpen(false); // Close modal after marking done
           refreshAll();
         }
         break;
@@ -1087,7 +1089,7 @@ export default function App() {
             </div>
 
             {/* Tasks Pagination */}
-            {tasksData.totalCount > 0 && (
+            {(tasksData?.totalCount > 0) && (
               <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-slate-200">
                 <div className="flex items-center gap-2 text-sm text-slate-600">
                   <span>
@@ -2145,6 +2147,16 @@ export default function App() {
                         </div>
                         <div className="flex flex-col gap-2">
                           <button
+                            onClick={() => {
+                              setViewTasksModalOpen(false);
+                              setActivePage('tasks');
+                              // Optionally scroll to the task or highlight it
+                            }}
+                            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium"
+                          >
+                            Go to Task
+                          </button>
+                          <button
                             onClick={() => handleTaskAction('view', task)}
                             className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-xs font-medium"
                           >
@@ -2164,6 +2176,45 @@ export default function App() {
                   ))}
                 </div>
               )}
+              
+              {/* Add New Task Button */}
+              <div className="mt-6 pt-4 border-t border-slate-200">
+                <button
+                  onClick={() => {
+                    // Close tasks modal and open add task form
+                    const leadData = leadTasks[0]; // Get lead info from first task
+                    setViewTasksModalOpen(false);
+                    
+                    // Find the lead and trigger add_task action
+                    // We need the full lead object, so let's set the modal directly
+                    setFormState({
+                      stage: 'Call Back',
+                      stageReason: 'Customer Was Traveling Ask To Callback',
+                      activityType: 'CALL',
+                      scheduleDate: new Date(Date.now() + 3600 * 1000).toISOString().slice(0, 16),
+                      title: `Followup Task`,
+                      remark: '',
+                      ownerRole: 'PreSales',
+                      teamMemberId: currentUser?.id || lookups.teamMembers?.[0]?.id || 1,
+                      channelPartnerId: lookups.channelPartners?.[0]?.id || 1,
+                      projectId: lookups.projects?.[0]?.id || 1,
+                      name: '',
+                      primaryNo: '',
+                      status: 'Active',
+                      requirement: '',
+                      subLocation: '',
+                      budget: '',
+                      ethnicity: '',
+                      tags: ''
+                    });
+                    setActiveModal({ type: 'add_task', lead: { id: leadData.leadId } });
+                  }}
+                  className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add New Task for this Lead
+                </button>
+              </div>
             </div>
           </div>
         </div>
