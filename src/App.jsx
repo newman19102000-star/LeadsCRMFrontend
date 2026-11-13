@@ -1095,6 +1095,7 @@ export default function App() {
                     <th className="py-3 px-3">Row</th>
                     <th className="py-3 px-3">Meta ID / Form ID</th>
                     <th className="py-3 px-3">Campaign / Form Name</th>
+                    <th className="py-3 px-3">Page</th>
                     <th className="py-3 px-3">Status</th>
                     <th className="py-3 px-3">Mapped CRM Project</th>
                     <th className="py-3 px-3">Lead Routing Mode</th>
@@ -1111,7 +1112,7 @@ export default function App() {
                 <tbody className="divide-y divide-slate-200">
                   {campaigns.length === 0 ? (
                     <tr>
-                      <td colSpan={14} className="py-8 text-center text-slate-500">
+                      <td colSpan={15} className="py-8 text-center text-slate-500">
                         No campaigns synced yet. Click "Sync Campaigns & Forms" to import from Meta and existing leads.
                       </td>
                     </tr>
@@ -1121,6 +1122,15 @@ export default function App() {
                         <td className="py-2.5 px-3 font-medium">{c.row}</td>
                         <td className="py-2.5 px-3 font-mono text-slate-500">{c.metaCampaignId}</td>
                         <td className="py-2.5 px-3 font-semibold text-slate-900">{c.name}</td>
+                        <td className="py-2.5 px-3">
+                          {c.pageName ? (
+                            <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-medium border border-blue-200">
+                              {c.pageName}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 text-[10px]">-</span>
+                          )}
+                        </td>
                         <td className="py-2.5 px-3">
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
                             c.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
