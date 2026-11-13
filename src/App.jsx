@@ -7,7 +7,7 @@ import { requestNotificationPermission, showLeadNotification } from './utils/not
 import {
   Users, CheckSquare, Search, RefreshCw, MoreVertical,
   Calendar, Building2, UserPlus, ArrowRightLeft, Trash2, Edit3,
-  Eye, Bell, Wifi, Layers, Plus, Link2, ShieldCheck, LogOut, Lock
+  Eye, Bell, Wifi, Layers, Plus, Link2, ShieldCheck, LogOut, Lock, X
 } from 'lucide-react';
 
 export default function App() {
