@@ -75,7 +75,6 @@ export default function App() {
 
   // Action Menu, Modal & Live Toast State
   const [openMenuLeadId, setOpenMenuLeadId] = useState(null);
-  const [openTaskMenuId, setOpenTaskMenuId] = useState(null);
   const [activeModal, setActiveModal] = useState(null);
   const [formState, setFormState] = useState({});
   const [liveToast, setLiveToast] = useState(null);
@@ -194,14 +193,11 @@ export default function App() {
       if (openMenuLeadId && !event.target.closest('.action-menu-container')) {
         setOpenMenuLeadId(null);
       }
-      if (openTaskMenuId && !event.target.closest('.action-menu-container')) {
-        setOpenTaskMenuId(null);
-      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [openMenuLeadId, openTaskMenuId]);
+  }, [openMenuLeadId]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -1016,31 +1012,23 @@ export default function App() {
                         </td>
                         <td className="py-2.5 px-3 text-slate-600">{t.completedOn}</td>
                         <td className="py-2.5 px-3">{t.completedBy}</td>
-                        <td className="py-2.5 px-3 text-center relative">
-                          <div className="action-menu-container relative">
-                            <button
-                              onClick={() => setOpenTaskMenuId(openTaskMenuId === t.id ? null : t.id)}
-                              className="p-1.5 rounded hover:bg-slate-200 text-slate-600 transition-colors"
-                            >
-                              <MoreVertical className="w-4 h-4" />
-                            </button>
-
-                            {openTaskMenuId === t.id && (
-                              <div className="absolute right-8 top-0 w-52 bg-white border border-slate-200 rounded-lg shadow-2xl py-1 z-[100] text-left">
-                                <button onClick={() => handleTaskAction('view', t)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs">
-                                  <Eye className="w-3.5 h-3.5 text-blue-600" /> View Task Details
-                                </button>
-                                <button onClick={() => handleTaskAction('navigate_to_lead', t)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs">
-                                  <User className="w-3.5 h-3.5 text-indigo-600" /> Navigate to Lead
-                                </button>
-                                {t.status !== 'Completed' && (
-                                  <button onClick={() => handleTaskAction('mark_done', t)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs">
-                                    <CheckSquare className="w-3.5 h-3.5 text-emerald-600" /> Mark as Done
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                          </div>
+                        <td className="py-2.5 px-3 text-center">
+                          <button
+                            onClick={async () => {
+                              try {
+                                const taskDetails = await crmApi.getTaskDetails(t.id);
+                                setSelectedTaskDetails(taskDetails);
+                                setViewTaskModalOpen(true);
+                              } catch (err) {
+                                console.error('Failed to fetch task details:', err);
+                                alert('Could not load task details. Please try again.');
+                              }
+                            }}
+                            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium transition inline-flex items-center gap-1.5"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            View
+                          </button>
                         </td>
                       </tr>
                     ))
