@@ -49,6 +49,10 @@ export const crmApi = {
   // Tasks Page APIs
   getTasks: (tab = 'today', page = 1) =>
     api.get('/tasks', { params: { tab, page } }).then(r => r.data),
+  getTask: (taskId) =>
+    api.get(`/tasks/${taskId}`).then(r => r.data),
+  getLeadTasks: (leadId) =>
+    api.get(`/tasks/lead/${leadId}`).then(r => r.data),
   completeTask: (taskId, payload) =>
     api.post(`/tasks/${taskId}/complete`, payload).then(r => r.data),
 
