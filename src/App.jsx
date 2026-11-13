@@ -75,11 +75,16 @@ export default function App() {
 
   // Action Menu, Modal & Live Toast State
   const [openMenuLeadId, setOpenMenuLeadId] = useState(null);
+  const [openTaskMenuId, setOpenTaskMenuId] = useState(null);
   const [activeModal, setActiveModal] = useState(null);
   const [formState, setFormState] = useState({});
   const [liveToast, setLiveToast] = useState(null);
   const [viewLeadModalOpen, setViewLeadModalOpen] = useState(false);
   const [selectedLeadId, setSelectedLeadId] = useState(null);
+  const [viewTasksModalOpen, setViewTasksModalOpen] = useState(false);
+  const [leadTasks, setLeadTasks] = useState([]);
+  const [viewTaskModalOpen, setViewTaskModalOpen] = useState(false);
+  const [selectedTaskDetails, setSelectedTaskDetails] = useState(null);
 
   const handleLogout = () => {
     localStorage.removeItem('crm_token');
@@ -189,11 +194,14 @@ export default function App() {
       if (openMenuLeadId && !event.target.closest('.action-menu-container')) {
         setOpenMenuLeadId(null);
       }
+      if (openTaskMenuId && !event.target.closest('.action-menu-container')) {
+        setOpenTaskMenuId(null);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [openMenuLeadId]);
+  }, [openMenuLeadId, openTaskMenuId]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -322,8 +330,56 @@ export default function App() {
     });
   };
 
+  // Handler for task actions
+  const handleTaskAction = async (action, task) => {
+    setOpenTaskMenuId(null);
+    
+    switch (action) {
+      case 'view':
+        try {
+          const details = await crmApi.getTask(task.id);
+          setSelectedTaskDetails(details);
+          setViewTaskModalOpen(true);
+        } catch (err) {
+          console.error('Failed loading task details:', err);
+        }
+        break;
+        
+      case 'navigate_to_lead':
+        if (task.leadId) {
+          setSelectedLeadId(task.leadId);
+          setViewLeadModalOpen(true);
+        }
+        break;
+        
+      case 'mark_done':
+        const outcome = window.prompt('Enter call/visit outcome remark:', task.remark);
+        if (outcome !== null) {
+          await crmApi.completeTask(task.id, { outcomeRemark: outcome });
+          refreshAll();
+        }
+        break;
+    }
+  };
+
   const handleRowAction = async (action, lead) => {
     setOpenMenuLeadId(null);
+
+    if (action === 'add_task') {
+      // Check if lead has existing tasks
+      try {
+        const tasks = await crmApi.getLeadTasks(lead.id);
+        if (tasks && tasks.length > 0) {
+          // Lead has tasks - show tasks modal
+          setLeadTasks(tasks);
+          setViewTasksModalOpen(true);
+          return;
+        }
+      } catch (err) {
+        console.error('Failed checking lead tasks:', err);
+      }
+      // No tasks or error - show add task form (fall through to setFormState below)
+    }
 
     if (action === 'convert') {
       await crmApi.convertToContact(lead.id);
@@ -924,7 +980,19 @@ export default function App() {
                       <tr key={t.id} className="hover:bg-slate-50">
                         <td className="py-2.5 px-3 font-medium">{t.row}</td>
                         <td className="py-2.5 px-3 text-slate-600">{fmtDate(t.createdDate)}</td>
-                        <td className="py-2.5 px-3 font-semibold text-slate-900">{t.lead}</td>
+                        <td className="py-2.5 px-3">
+                          <button 
+                            onClick={() => {
+                              if (t.leadId) {
+                                setSelectedLeadId(t.leadId);
+                                setViewLeadModalOpen(true);
+                              }
+                            }}
+                            className="font-semibold text-slate-900 hover:text-indigo-600 hover:underline transition"
+                          >
+                            {t.lead}
+                          </button>
+                        </td>
                         <td className="py-2.5 px-3 font-mono">{t.mobile}</td>
                         <td className="py-2.5 px-3 font-semibold text-indigo-600">{t.category}</td>
                         <td className="py-2.5 px-3">{t.assignedBy}</td>
@@ -949,22 +1017,29 @@ export default function App() {
                         <td className="py-2.5 px-3 text-slate-600">{t.completedOn}</td>
                         <td className="py-2.5 px-3">{t.completedBy}</td>
                         <td className="py-2.5 px-3 text-center">
-                          {t.status !== 'Completed' ? (
+                          <div className="relative action-menu-container">
                             <button
-                              onClick={async () => {
-                                const outcome = window.prompt('Enter call/visit outcome remark:', t.remark);
-                                if (outcome !== null) {
-                                  await crmApi.completeTask(t.id, { outcomeRemark: outcome });
-                                  refreshAll();
-                                }
-                              }}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-medium"
+                              onClick={() => setOpenTaskMenuId(openTaskMenuId === t.id ? null : t.id)}
+                              className="px-2.5 py-1 bg-slate-900 hover:bg-indigo-600 text-white rounded text-[11px] font-medium transition"
                             >
-                              Mark Done
+                              Actions ▼
                             </button>
-                          ) : (
-                            <span className="text-slate-400">-</span>
-                          )}
+                            {openTaskMenuId === t.id && (
+                              <div className="absolute right-0 mt-1 w-52 bg-white border border-slate-200 rounded-lg shadow-xl z-50 py-1">
+                                <button onClick={() => handleTaskAction('view', t)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs">
+                                  <Eye className="w-3.5 h-3.5 text-blue-600" /> View Task Details
+                                </button>
+                                <button onClick={() => handleTaskAction('navigate_to_lead', t)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs">
+                                  <User className="w-3.5 h-3.5 text-indigo-600" /> Navigate to Lead
+                                </button>
+                                {t.status !== 'Completed' && (
+                                  <button onClick={() => handleTaskAction('mark_done', t)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs">
+                                    <CheckSquare className="w-3.5 h-3.5 text-emerald-600" /> Mark as Done
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -1917,6 +1992,209 @@ export default function App() {
           setSelectedLeadId(null);
         }}
       />
+
+      {/* View Lead Tasks Modal */}
+      {viewTasksModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-slate-900">Tasks for Lead</h2>
+              <button
+                onClick={() => {
+                  setViewTasksModalOpen(false);
+                  setLeadTasks([]);
+                }}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              {leadTasks.length === 0 ? (
+                <div className="text-center py-8 text-slate-500">
+                  <CheckSquare className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                  <p>No tasks found for this lead.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {leadTasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className="border border-slate-200 rounded-lg p-4 hover:border-indigo-300 transition"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`px-2 py-0.5 rounded text-[11px] font-medium ${
+                              task.status === 'Completed' 
+                                ? 'bg-emerald-100 text-emerald-700' 
+                                : 'bg-amber-100 text-amber-800'
+                            }`}>
+                              {task.status}
+                            </span>
+                            <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded font-semibold text-[11px]">
+                              {task.activityType}
+                            </span>
+                          </div>
+                          <h3 className="font-semibold text-slate-900 mb-1">{task.title}</h3>
+                          <p className="text-sm text-slate-600 mb-2">{task.remark}</p>
+                          <div className="flex items-center gap-4 text-xs text-slate-500">
+                            <span>📅 {fmtDate(task.scheduleDate)}</span>
+                            <span>👤 {task.assignedTo}</span>
+                            <span className="font-semibold text-amber-700">{task.stage}</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <button
+                            onClick={() => handleTaskAction('view', task)}
+                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-xs font-medium"
+                          >
+                            View Details
+                          </button>
+                          {task.status !== 'Completed' && (
+                            <button
+                              onClick={() => handleTaskAction('mark_done', task)}
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-medium"
+                            >
+                              Mark Done
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Task Details Modal */}
+      {viewTaskModalOpen && selectedTaskDetails && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full">
+            <div className="border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-slate-900">Task Details</h2>
+              <button
+                onClick={() => {
+                  setViewTaskModalOpen(false);
+                  setSelectedTaskDetails(null);
+                }}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {/* Lead Info */}
+              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-indigo-600 font-semibold mb-1">ASSOCIATED LEAD</p>
+                    <p className="font-semibold text-slate-900">{selectedTaskDetails.leadName}</p>
+                    <p className="text-sm text-slate-600">{selectedTaskDetails.leadNumber} • {selectedTaskDetails.leadPhone}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setViewTaskModalOpen(false);
+                      setSelectedLeadId(selectedTaskDetails.leadId);
+                      setViewLeadModalOpen(true);
+                    }}
+                    className="px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium"
+                  >
+                    View Lead →
+                  </button>
+                </div>
+              </div>
+
+              {/* Task Details */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-slate-500 font-semibold mb-1">STATUS</p>
+                  <span className={`inline-block px-2 py-1 rounded text-sm font-medium ${
+                    selectedTaskDetails.status === 'Completed' 
+                      ? 'bg-emerald-100 text-emerald-700' 
+                      : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {selectedTaskDetails.status}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 font-semibold mb-1">ACTIVITY TYPE</p>
+                  <span className="inline-block px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm font-semibold">
+                    {selectedTaskDetails.activityType}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 font-semibold mb-1">STAGE</p>
+                  <p className="font-semibold text-amber-700">{selectedTaskDetails.stage}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 font-semibold mb-1">SCHEDULE DATE</p>
+                  <p className="font-medium text-slate-900">{fmtDate(selectedTaskDetails.scheduleDate)}</p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs text-slate-500 font-semibold mb-1">TITLE</p>
+                <p className="font-semibold text-slate-900">{selectedTaskDetails.title}</p>
+              </div>
+
+              <div>
+                <p className="text-xs text-slate-500 font-semibold mb-1">REMARK</p>
+                <p className="text-slate-700">{selectedTaskDetails.remark}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-slate-500 font-semibold mb-1">ASSIGNED BY</p>
+                  <p className="text-slate-900">{selectedTaskDetails.assignedBy}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 font-semibold mb-1">ASSIGNED TO</p>
+                  <p className="text-slate-900">{selectedTaskDetails.assignedTo}</p>
+                </div>
+              </div>
+
+              {selectedTaskDetails.status === 'Completed' && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                  <p className="text-xs text-emerald-600 font-semibold mb-1">COMPLETED</p>
+                  <p className="text-sm text-slate-900">{selectedTaskDetails.completedOn}</p>
+                  <p className="text-sm text-slate-600">by {selectedTaskDetails.completedBy}</p>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-4 border-t border-slate-200">
+                {selectedTaskDetails.status !== 'Completed' && (
+                  <button
+                    onClick={async () => {
+                      const outcome = window.prompt('Enter call/visit outcome remark:', selectedTaskDetails.remark);
+                      if (outcome !== null) {
+                        await crmApi.completeTask(selectedTaskDetails.id, { outcomeRemark: outcome });
+                        setViewTaskModalOpen(false);
+                        refreshAll();
+                      }
+                    }}
+                    className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium"
+                  >
+                    Mark as Done
+                  </button>
+                )}
+                <button
+                  onClick={() => setViewTaskModalOpen(false)}
+                  className="flex-1 px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-900 rounded-lg font-medium"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* PWA Install Prompt */}
       <InstallPWA />
