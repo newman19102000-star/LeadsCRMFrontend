@@ -1017,27 +1017,57 @@ export default function App() {
                         <td className="py-2.5 px-3 text-slate-600">{t.completedOn}</td>
                         <td className="py-2.5 px-3">{t.completedBy}</td>
                         <td className="py-2.5 px-3 text-center">
-                          <div className="relative action-menu-container">
+                          <div className="relative inline-block action-menu-container">
                             <button
-                              onClick={() => setOpenTaskMenuId(openTaskMenuId === t.id ? null : t.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenTaskMenuId(openTaskMenuId === t.id ? null : t.id);
+                              }}
                               className="px-2.5 py-1 bg-slate-900 hover:bg-indigo-600 text-white rounded text-[11px] font-medium transition"
                             >
                               Actions ▼
                             </button>
                             {openTaskMenuId === t.id && (
-                              <div className="absolute right-0 mt-1 w-52 bg-white border border-slate-200 rounded-lg shadow-xl z-[9999] py-1">
-                                <button onClick={() => handleTaskAction('view', t)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs text-left">
-                                  <Eye className="w-3.5 h-3.5 text-blue-600" /> View Task Details
-                                </button>
-                                <button onClick={() => handleTaskAction('navigate_to_lead', t)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs text-left">
-                                  <User className="w-3.5 h-3.5 text-indigo-600" /> Navigate to Lead
-                                </button>
-                                {t.status !== 'Completed' && (
-                                  <button onClick={() => handleTaskAction('mark_done', t)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs text-left">
-                                    <CheckSquare className="w-3.5 h-3.5 text-emerald-600" /> Mark as Done
+                              <>
+                                <div 
+                                  className="fixed inset-0 z-[9998]" 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenTaskMenuId(null);
+                                  }}
+                                />
+                                <div className="absolute right-0 mt-1 w-52 bg-white border border-slate-200 rounded-lg shadow-xl z-[9999] py-1">
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleTaskAction('view', t);
+                                    }} 
+                                    className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs text-left"
+                                  >
+                                    <Eye className="w-3.5 h-3.5 text-blue-600" /> View Task Details
                                   </button>
-                                )}
-                              </div>
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleTaskAction('navigate_to_lead', t);
+                                    }} 
+                                    className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs text-left"
+                                  >
+                                    <User className="w-3.5 h-3.5 text-indigo-600" /> Navigate to Lead
+                                  </button>
+                                  {t.status !== 'Completed' && (
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleTaskAction('mark_done', t);
+                                      }} 
+                                      className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs text-left"
+                                    >
+                                      <CheckSquare className="w-3.5 h-3.5 text-emerald-600" /> Mark as Done
+                                    </button>
+                                  )}
+                                </div>
+                              </>
                             )}
                           </div>
                         </td>
