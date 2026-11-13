@@ -1137,7 +1137,16 @@ export default function App() {
                             {c.mappedProjectName}
                           </span>
                         </td>
-                        <td className="py-2.5 px-3 text-slate-700">{c.routingMode}</td>
+                        <td className="py-2.5 px-3">
+                          <div className="flex items-center gap-1.5">
+                            {c.assignedWorkerCount > 0 && (
+                              <span className="px-1.5 py-0.5 bg-indigo-600 text-white rounded text-[9px] font-bold" title={`${c.assignedWorkerCount} specific workers assigned`}>
+                                {c.assignedWorkerCount}👥
+                              </span>
+                            )}
+                            <span className="text-slate-700 text-xs">{c.routingMode}</span>
+                          </div>
+                        </td>
                         <td className="py-2.5 px-3">{c.defaultRequirement || '-'}</td>
                         <td className="py-2.5 px-3 text-right font-bold text-slate-900">{c.totalLeads}</td>
                         <td className="py-2.5 px-3 text-right text-emerald-600 font-semibold">{c.freshUntouched}</td>
