@@ -874,9 +874,11 @@ export default function App() {
                                 <button onClick={() => handleRowAction('convert', r)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs">
                                   <CheckSquare className="w-3.5 h-3.5 text-emerald-600" /> Convert to Contact
                                 </button>
-                                <button onClick={() => handleRowAction('transfer', r)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs">
-                                  <ArrowRightLeft className="w-3.5 h-3.5 text-amber-600" /> Transfer Lead
-                                </button>
+                                {isAdmin && (
+                                  <button onClick={() => handleRowAction('transfer', r)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs">
+                                    <ArrowRightLeft className="w-3.5 h-3.5 text-amber-600" /> Transfer Lead
+                                  </button>
+                                )}
                                 <button onClick={() => handleRowAction('add_owner', r)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs">
                                   <UserPlus className="w-3.5 h-3.5 text-blue-600" /> Add Owner
                                 </button>
