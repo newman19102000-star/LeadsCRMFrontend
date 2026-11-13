@@ -1016,7 +1016,7 @@ export default function App() {
                           <button
                             onClick={async () => {
                               try {
-                                const taskDetails = await crmApi.getTaskDetails(t.id);
+                                const taskDetails = await crmApi.getTask(t.id);
                                 setSelectedTaskDetails(taskDetails);
                                 setViewTaskModalOpen(true);
                               } catch (err) {
