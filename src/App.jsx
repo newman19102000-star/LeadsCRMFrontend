@@ -2147,20 +2147,19 @@ export default function App() {
                         </div>
                         <div className="flex flex-col gap-2">
                           <button
-                            onClick={() => {
-                              setViewTasksModalOpen(false);
-                              setActivePage('tasks');
-                              // Optionally scroll to the task or highlight it
+                            onClick={async () => {
+                              try {
+                                const details = await crmApi.getTask(task.id);
+                                setSelectedTaskDetails(details);
+                                setViewTasksModalOpen(false);
+                                setViewTaskModalOpen(true);
+                              } catch (err) {
+                                console.error('Failed loading task details:', err);
+                              }
                             }}
                             className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium"
                           >
-                            Go to Task
-                          </button>
-                          <button
-                            onClick={() => handleTaskAction('view', task)}
-                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-xs font-medium"
-                          >
-                            View Details
+                            Open Task
                           </button>
                           {task.status !== 'Completed' && (
                             <button
