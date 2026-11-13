@@ -44,6 +44,7 @@ export default function App() {
   const [tasksData, setTasksData] = useState({
     counts: { todaysTask: 0, upcomingTask: 0, pendingTasks: 0, completedTasks: 0 },
     data: [],
+    totalCount: 0,
     page: 1,
     pageSize: 50
   });
@@ -66,7 +67,8 @@ export default function App() {
   const [connectingOAuth, setConnectingOAuth] = useState(false);
 
   // Team & RBAC Management State
-  const [companyUsers, setCompanyUsers] = useState([]);
+  const [companyUsers, setCompanyUsers] = useState({ totalCount: 0, page: 1, pageSize: 50, data: [] });
+  const [currentTeamPage, setCurrentTeamPage] = useState(1);
   const [newUserForm, setNewUserForm] = useState({
     name: '',
     email: '',
@@ -149,15 +151,15 @@ export default function App() {
     }
   }, [currentUser]);
 
-  const loadCompanyUsers = useCallback(async () => {
+  const loadCompanyUsers = useCallback(async (page = currentTeamPage) => {
     if (!currentUser) return;
     try {
-      const users = await crmApi.getCompanyUsers();
+      const users = await crmApi.getCompanyUsers(page);
       setCompanyUsers(users);
     } catch (err) {
       console.error('Failed loading company users:', err);
     }
-  }, [currentUser]);
+  }, [currentUser, currentTeamPage]);
 
   // Real-Time SignalR Handler
   const handleRealtimeLead = useCallback((notification) => {
@@ -208,8 +210,8 @@ export default function App() {
     if (activePage === 'leads') loadLeads(activeLeadTab, searchQuery, currentLeadPage);
     else if (activePage === 'tasks') loadTasks(activeTaskTab, currentTaskPage);
     else if (activePage === 'campaigns') loadCampaignsAndPages();
-    else if (activePage === 'team') loadCompanyUsers();
-  }, [currentUser, activePage, activeLeadTab, activeTaskTab, currentLeadPage, currentTaskPage, loadLeads, loadTasks, loadCampaignsAndPages, loadCompanyUsers]);
+    else if (activePage === 'team') loadCompanyUsers(currentTeamPage);
+  }, [currentUser, activePage, activeLeadTab, activeTaskTab, currentLeadPage, currentTaskPage, currentTeamPage, loadLeads, loadTasks, loadCampaignsAndPages, loadCompanyUsers]);
 
   // Reset to page 1 when changing tabs or search
   useEffect(() => {
@@ -225,7 +227,7 @@ export default function App() {
     if (activePage === 'leads') loadLeads(activeLeadTab, searchQuery, currentLeadPage);
     else if (activePage === 'tasks') loadTasks(activeTaskTab, currentTaskPage);
     else if (activePage === 'campaigns') loadCampaignsAndPages();
-    else if (activePage === 'team') loadCompanyUsers();
+    else if (activePage === 'team') loadCompanyUsers(currentTeamPage);
   };
 
   // Login / Company Registration Submit Handlers
@@ -1085,11 +1087,11 @@ export default function App() {
             </div>
 
             {/* Tasks Pagination */}
-            {(tasksData.data || []).length > 0 && (
+            {tasksData.totalCount > 0 && (
               <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-slate-200">
                 <div className="flex items-center gap-2 text-sm text-slate-600">
                   <span>
-                    Page {currentTaskPage} • Showing {(tasksData.data || []).length} tasks
+                    Showing {((tasksData.page - 1) * tasksData.pageSize) + 1} to {Math.min(tasksData.page * tasksData.pageSize, tasksData.totalCount)} of {tasksData.totalCount} tasks
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1101,11 +1103,11 @@ export default function App() {
                     Previous
                   </button>
                   <span className="px-3 py-1.5 text-sm font-medium text-slate-700">
-                    Page {currentTaskPage}
+                    Page {currentTaskPage} of {Math.ceil(tasksData.totalCount / tasksData.pageSize)}
                   </span>
                   <button
                     onClick={() => setCurrentTaskPage(p => p + 1)}
-                    disabled={(tasksData.data || []).length < 50}
+                    disabled={currentTaskPage >= Math.ceil(tasksData.totalCount / tasksData.pageSize)}
                     className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next
@@ -1479,7 +1481,7 @@ export default function App() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {companyUsers.map((u) => (
+                  {(companyUsers.data || []).map((u) => (
                     <tr key={u.id} className="hover:bg-slate-50">
                       <td className="py-2.5 px-3 font-mono">{u.id}</td>
                       <td className="py-2.5 px-3 font-semibold text-slate-900">{u.name}</td>
@@ -1514,7 +1516,7 @@ export default function App() {
                                 canViewAllCompanyLeads: !u.canViewAllCompanyLeads,
                                 isActive: u.isActive
                               });
-                              loadCompanyUsers();
+                              loadCompanyUsers(currentTeamPage);
                             }}
                             className="px-2.5 py-1 bg-slate-900 hover:bg-indigo-600 text-white rounded text-[11px] font-medium"
                           >
@@ -1527,6 +1529,36 @@ export default function App() {
                 </tbody>
               </table>
               </div>
+
+              {/* Team Pagination */}
+              {companyUsers.totalCount > 0 && (
+                <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-slate-200">
+                  <div className="flex items-center gap-2 text-sm text-slate-600">
+                    <span>
+                      Showing {((companyUsers.page - 1) * companyUsers.pageSize) + 1} to {Math.min(companyUsers.page * companyUsers.pageSize, companyUsers.totalCount)} of {companyUsers.totalCount} team members
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentTeamPage(p => Math.max(1, p - 1))}
+                      disabled={currentTeamPage === 1}
+                      className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    <span className="px-3 py-1.5 text-sm font-medium text-slate-700">
+                      Page {currentTeamPage} of {Math.ceil(companyUsers.totalCount / companyUsers.pageSize)}
+                    </span>
+                    <button
+                      onClick={() => setCurrentTeamPage(p => p + 1)}
+                      disabled={currentTeamPage >= Math.ceil(companyUsers.totalCount / companyUsers.pageSize)}
+                      className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

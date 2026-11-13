@@ -19,8 +19,8 @@ export const crmApi = {
     api.post('/auth/login', { email, password }).then(r => r.data),
   registerCompany: (payload) =>
     api.post('/auth/register-company', payload).then(r => r.data),
-  getCompanyUsers: () =>
-    api.get('/auth/users').then(r => r.data),
+  getCompanyUsers: (page = 1) =>
+    api.get('/auth/users', { params: { page } }).then(r => r.data),
   createCompanyUser: (payload) =>
     api.post('/auth/users', payload).then(r => r.data),
   updateUserPermissions: (id, payload) =>
