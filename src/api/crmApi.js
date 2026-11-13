@@ -58,6 +58,12 @@ export const crmApi = {
     api.post('/campaigns/sync', null, { params: { adAccountId } }).then(r => r.data),
   updateCampaignMapping: (id, payload) =>
     api.put(`/campaigns/${id}/mapping`, payload).then(r => r.data),
+  getCampaignWorkers: (id) =>
+    api.get(`/campaigns/${id}/workers`).then(r => r.data),
+  assignCampaignWorkers: (id, workerIds) =>
+    api.put(`/campaigns/${id}/workers`, { workerIds }).then(r => r.data),
+  clearCampaignWorkers: (id) =>
+    api.delete(`/campaigns/${id}/workers`).then(r => r.data),
 
   // Connected Facebook Pages APIs
   getConnectedPages: () => api.get('/meta-pages').then(r => r.data),

@@ -1147,16 +1147,28 @@ export default function App() {
                         <td className="py-2.5 px-3 text-right font-mono font-semibold">₹{Number(c.costPerLead || 0).toLocaleString('en-IN')}</td>
                         <td className="py-2.5 px-3 text-center">
                           <button
-                            onClick={() => setEditingCampaign({
-                              ...c,
-                              mappedProjectId: c.mappedProjectId || '',
-                              defaultPreSalesAgentId: c.defaultPreSalesAgentId || '',
-                              defaultRequirement: c.defaultRequirement || '',
-                              defaultSubLocation: c.defaultSubLocation || '',
-                              defaultTags: c.defaultTags || '',
-                              spendInr: c.spendInr || 0,
-                              applyToExistingLeads: true
-                            })}
+                            onClick={async () => {
+                              // Fetch assigned workers for this campaign
+                              let selectedWorkerIds = [];
+                              try {
+                                const workerData = await crmApi.getCampaignWorkers(c.id);
+                                selectedWorkerIds = workerData.assignedWorkers.map(w => w.id);
+                              } catch (err) {
+                                console.error('Failed to fetch campaign workers:', err);
+                              }
+                              
+                              setEditingCampaign({
+                                ...c,
+                                mappedProjectId: c.mappedProjectId || '',
+                                defaultPreSalesAgentId: c.defaultPreSalesAgentId || '',
+                                defaultRequirement: c.defaultRequirement || '',
+                                defaultSubLocation: c.defaultSubLocation || '',
+                                defaultTags: c.defaultTags || '',
+                                spendInr: c.spendInr || 0,
+                                selectedWorkerIds: selectedWorkerIds,
+                                applyToExistingLeads: true
+                              });
+                            }}
                             className="px-2.5 py-1 bg-slate-900 hover:bg-indigo-600 text-white rounded text-[11px] font-medium transition"
                           >
                             Configure Mapping
@@ -1688,7 +1700,7 @@ export default function App() {
       {/* Configure Campaign Mapping Modal */}
       {editingCampaign && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
+          <div className="bg-white rounded-xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <h3 className="font-bold text-base text-slate-900 mb-1">
               Map Campaign: {editingCampaign.name}
             </h3>
@@ -1706,38 +1718,105 @@ export default function App() {
                   spendInr: Number(editingCampaign.spendInr || 0),
                   applyToExistingLeads: editingCampaign.applyToExistingLeads
                 });
+                
+                // Save worker assignments
+                if (editingCampaign.selectedWorkerIds && editingCampaign.selectedWorkerIds.length > 0) {
+                  await crmApi.assignCampaignWorkers(editingCampaign.id, editingCampaign.selectedWorkerIds);
+                } else if (editingCampaign.selectedWorkerIds?.length === 0 && editingCampaign.assignedWorkerCount > 0) {
+                  // User cleared all workers, reset to tenant-wide
+                  await crmApi.clearCampaignWorkers(editingCampaign.id);
+                }
+                
                 setEditingCampaign(null);
                 loadCampaignsAndPages();
                 loadCountsAndLookups();
               }}
               className="space-y-3 text-xs"
             >
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Map to CRM Project</label>
-                <select
-                  value={editingCampaign.mappedProjectId}
-                  onChange={(e) => setEditingCampaign({ ...editingCampaign, mappedProjectId: e.target.value })}
-                  className="w-full border rounded px-3 py-2"
-                >
-                  <option value="">-- Unmapped --</option>
-                  {(lookups.projects || []).map(p => (
-                    <option key={p.id} value={p.id}>{p.name} ({p.subLocation})</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Map to CRM Project</label>
+                  <select
+                    value={editingCampaign.mappedProjectId}
+                    onChange={(e) => setEditingCampaign({ ...editingCampaign, mappedProjectId: e.target.value })}
+                    className="w-full border rounded px-3 py-2"
+                  >
+                    <option value="">-- Unmapped --</option>
+                    {(lookups.projects || []).map(p => (
+                      <option key={p.id} value={p.id}>{p.name} ({p.subLocation})</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Ad Spend (₹ INR)</label>
+                  <input
+                    type="number"
+                    value={editingCampaign.spendInr}
+                    onChange={(e) => setEditingCampaign({ ...editingCampaign, spendInr: e.target.value })}
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Pre-Sales Assignment Rule</label>
-                <select
-                  value={editingCampaign.defaultPreSalesAgentId}
-                  onChange={(e) => setEditingCampaign({ ...editingCampaign, defaultPreSalesAgentId: e.target.value })}
-                  className="w-full border rounded px-3 py-2"
-                >
-                  <option value="">⚡ Automatic Round-Robin (All Active Pre-Sales)</option>
-                  {(lookups.teamMembers || []).filter(m => m.role === 'PreSales').map(m => (
-                    <option key={m.id} value={m.id}>Assign Only To: {m.name}</option>
-                  ))}
-                </select>
+
+              <div className="border-t pt-3">
+                <h4 className="font-bold text-sm text-slate-900 mb-2">🎯 Lead Assignment Strategy</h4>
+                <div className="bg-slate-50 rounded-lg p-3 space-y-3">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Assign Specific Workers (Optional)</label>
+                    <p className="text-[10px] text-slate-500 mb-2">
+                      Select specific PreSales workers for this campaign. Leads will be distributed via round-robin <strong>only within this group</strong>. Leave empty for tenant-wide round-robin.
+                    </p>
+                    <div className="space-y-1 max-h-40 overflow-y-auto border rounded p-2 bg-white">
+                      {(lookups.teamMembers || [])
+                        .filter(m => m.role === 'PreSales')
+                        .map(m => (
+                          <label key={m.id} className="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={(editingCampaign.selectedWorkerIds || []).includes(m.id)}
+                              onChange={(e) => {
+                                const currentIds = editingCampaign.selectedWorkerIds || [];
+                                const newIds = e.target.checked
+                                  ? [...currentIds, m.id]
+                                  : currentIds.filter(id => id !== m.id);
+                                setEditingCampaign({ ...editingCampaign, selectedWorkerIds: newIds });
+                              }}
+                              className="w-4 h-4"
+                            />
+                            <span className="text-xs font-medium text-slate-700">{m.name}</span>
+                            <span className="text-[10px] text-slate-500">({m.email})</span>
+                          </label>
+                        ))}
+                    </div>
+                    {(editingCampaign.selectedWorkerIds?.length > 0) && (
+                      <div className="mt-2 p-2 bg-indigo-50 border border-indigo-200 rounded text-[11px] text-indigo-800">
+                        ✓ <strong>{editingCampaign.selectedWorkerIds.length} worker(s) selected</strong>. Round-robin will distribute leads only among these agents.
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Fallback: Default Agent (Optional)</label>
+                    <select
+                      value={editingCampaign.defaultPreSalesAgentId}
+                      onChange={(e) => setEditingCampaign({ ...editingCampaign, defaultPreSalesAgentId: e.target.value })}
+                      className="w-full border rounded px-3 py-2"
+                      disabled={editingCampaign.selectedWorkerIds?.length > 0}
+                    >
+                      <option value="">None (Use Round-Robin)</option>
+                      {(lookups.teamMembers || []).filter(m => m.role === 'PreSales').map(m => (
+                        <option key={m.id} value={m.id}>Assign Only To: {m.name}</option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-slate-500 mt-1">
+                      {editingCampaign.selectedWorkerIds?.length > 0
+                        ? "Disabled when specific workers are selected"
+                        : "Assign all leads from this campaign to one specific agent"}
+                    </p>
+                  </div>
+                </div>
               </div>
+
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Default Requirement</label>
@@ -1750,11 +1829,12 @@ export default function App() {
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Ad Spend (₹ INR)</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Default Sub Location</label>
                   <input
-                    type="number"
-                    value={editingCampaign.spendInr}
-                    onChange={(e) => setEditingCampaign({ ...editingCampaign, spendInr: e.target.value })}
+                    type="text"
+                    placeholder="e.g. Andheri West"
+                    value={editingCampaign.defaultSubLocation}
+                    onChange={(e) => setEditingCampaign({ ...editingCampaign, defaultSubLocation: e.target.value })}
                     className="w-full border rounded px-2.5 py-1.5"
                   />
                 </div>
