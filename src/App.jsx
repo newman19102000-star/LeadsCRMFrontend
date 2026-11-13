@@ -1025,15 +1025,15 @@ export default function App() {
                               Actions ▼
                             </button>
                             {openTaskMenuId === t.id && (
-                              <div className="absolute right-0 mt-1 w-52 bg-white border border-slate-200 rounded-lg shadow-xl z-50 py-1">
-                                <button onClick={() => handleTaskAction('view', t)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs">
+                              <div className="absolute right-0 mt-1 w-52 bg-white border border-slate-200 rounded-lg shadow-xl z-[9999] py-1">
+                                <button onClick={() => handleTaskAction('view', t)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs text-left">
                                   <Eye className="w-3.5 h-3.5 text-blue-600" /> View Task Details
                                 </button>
-                                <button onClick={() => handleTaskAction('navigate_to_lead', t)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs">
+                                <button onClick={() => handleTaskAction('navigate_to_lead', t)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs text-left">
                                   <User className="w-3.5 h-3.5 text-indigo-600" /> Navigate to Lead
                                 </button>
                                 {t.status !== 'Completed' && (
-                                  <button onClick={() => handleTaskAction('mark_done', t)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs">
+                                  <button onClick={() => handleTaskAction('mark_done', t)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs text-left">
                                     <CheckSquare className="w-3.5 h-3.5 text-emerald-600" /> Mark as Done
                                   </button>
                                 )}
