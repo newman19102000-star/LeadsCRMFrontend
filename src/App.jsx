@@ -35,16 +35,20 @@ export default function App() {
   // Leads State
   const [activeLeadTab, setActiveLeadTab] = useState('all_total');
   const [searchQuery, setSearchQuery] = useState('');
-  const [leadsData, setLeadsData] = useState({ totalCount: 0, data: [] });
+  const [leadsData, setLeadsData] = useState({ totalCount: 0, page: 1, pageSize: 50, data: [] });
   const [loadingLeads, setLoadingLeads] = useState(false);
+  const [currentLeadPage, setCurrentLeadPage] = useState(1);
 
   // Tasks State
   const [activeTaskTab, setActiveTaskTab] = useState('today');
   const [tasksData, setTasksData] = useState({
     counts: { todaysTask: 0, upcomingTask: 0, pendingTasks: 0, completedTasks: 0 },
-    data: []
+    data: [],
+    page: 1,
+    pageSize: 50
   });
   const [loadingTasks, setLoadingTasks] = useState(false);
+  const [currentTaskPage, setCurrentTaskPage] = useState(1);
 
   // Campaigns & Connected Meta Pages State
   const [campaigns, setCampaigns] = useState([]);
@@ -105,31 +109,31 @@ export default function App() {
     }
   }, [currentUser]);
 
-  const loadLeads = useCallback(async (tab = activeLeadTab, search = searchQuery) => {
+  const loadLeads = useCallback(async (tab = activeLeadTab, search = searchQuery, page = currentLeadPage) => {
     if (!currentUser) return;
     setLoadingLeads(true);
     try {
-      const res = await crmApi.getLeads(tab, search, 1);
+      const res = await crmApi.getLeads(tab, search, page);
       setLeadsData(res);
     } catch (err) {
       console.error('Failed loading leads:', err);
     } finally {
       setLoadingLeads(false);
     }
-  }, [currentUser, activeLeadTab, searchQuery]);
+  }, [currentUser, activeLeadTab, searchQuery, currentLeadPage]);
 
-  const loadTasks = useCallback(async (tab = activeTaskTab) => {
+  const loadTasks = useCallback(async (tab = activeTaskTab, page = currentTaskPage) => {
     if (!currentUser) return;
     setLoadingTasks(true);
     try {
-      const res = await crmApi.getTasks(tab, 1);
+      const res = await crmApi.getTasks(tab, page);
       setTasksData(res);
     } catch (err) {
       console.error('Failed loading tasks:', err);
     } finally {
       setLoadingTasks(false);
     }
-  }, [currentUser, activeTaskTab]);
+  }, [currentUser, activeTaskTab, currentTaskPage]);
 
   const loadCampaignsAndPages = useCallback(async () => {
     if (!currentUser) return;
@@ -201,16 +205,25 @@ export default function App() {
 
   useEffect(() => {
     if (!currentUser) return;
-    if (activePage === 'leads') loadLeads(activeLeadTab, searchQuery);
-    else if (activePage === 'tasks') loadTasks(activeTaskTab);
+    if (activePage === 'leads') loadLeads(activeLeadTab, searchQuery, currentLeadPage);
+    else if (activePage === 'tasks') loadTasks(activeTaskTab, currentTaskPage);
     else if (activePage === 'campaigns') loadCampaignsAndPages();
     else if (activePage === 'team') loadCompanyUsers();
-  }, [currentUser, activePage, activeLeadTab, activeTaskTab, loadLeads, loadTasks, loadCampaignsAndPages, loadCompanyUsers]);
+  }, [currentUser, activePage, activeLeadTab, activeTaskTab, currentLeadPage, currentTaskPage, loadLeads, loadTasks, loadCampaignsAndPages, loadCompanyUsers]);
+
+  // Reset to page 1 when changing tabs or search
+  useEffect(() => {
+    setCurrentLeadPage(1);
+  }, [activeLeadTab, searchQuery]);
+
+  useEffect(() => {
+    setCurrentTaskPage(1);
+  }, [activeTaskTab]);
 
   const refreshAll = () => {
     loadCountsAndLookups();
-    if (activePage === 'leads') loadLeads(activeLeadTab, searchQuery);
-    else if (activePage === 'tasks') loadTasks(activeTaskTab);
+    if (activePage === 'leads') loadLeads(activeLeadTab, searchQuery, currentLeadPage);
+    else if (activePage === 'tasks') loadTasks(activeTaskTab, currentTaskPage);
     else if (activePage === 'campaigns') loadCampaignsAndPages();
     else if (activePage === 'team') loadCompanyUsers();
   };
@@ -915,6 +928,36 @@ export default function App() {
                 </tbody>
               </table>
             </div>
+
+            {/* Leads Pagination */}
+            {leadsData.totalCount > 0 && (
+              <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-slate-200">
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <span>
+                    Showing {((leadsData.page - 1) * leadsData.pageSize) + 1} to {Math.min(leadsData.page * leadsData.pageSize, leadsData.totalCount)} of {leadsData.totalCount} results
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentLeadPage(p => Math.max(1, p - 1))}
+                    disabled={currentLeadPage === 1}
+                    className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <span className="px-3 py-1.5 text-sm font-medium text-slate-700">
+                    Page {currentLeadPage} of {Math.ceil(leadsData.totalCount / leadsData.pageSize)}
+                  </span>
+                  <button
+                    onClick={() => setCurrentLeadPage(p => p + 1)}
+                    disabled={currentLeadPage >= Math.ceil(leadsData.totalCount / leadsData.pageSize)}
+                    className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         ) : activePage === 'tasks' ? (
           /* TASKS PAGE */
@@ -1040,6 +1083,36 @@ export default function App() {
                 </tbody>
               </table>
             </div>
+
+            {/* Tasks Pagination */}
+            {(tasksData.data || []).length > 0 && (
+              <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-slate-200">
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <span>
+                    Page {currentTaskPage} • Showing {(tasksData.data || []).length} tasks
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentTaskPage(p => Math.max(1, p - 1))}
+                    disabled={currentTaskPage === 1}
+                    className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <span className="px-3 py-1.5 text-sm font-medium text-slate-700">
+                    Page {currentTaskPage}
+                  </span>
+                  <button
+                    onClick={() => setCurrentTaskPage(p => p + 1)}
+                    disabled={(tasksData.data || []).length < 50}
+                    className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         ) : activePage === 'campaigns' ? (
           /* CAMPAIGNS & CONNECTED FACEBOOK PAGES WORKSPACE */
