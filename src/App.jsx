@@ -1016,7 +1016,9 @@ export default function App() {
                           <button
                             onClick={async () => {
                               try {
+                                console.log('Fetching task details for:', t.id);
                                 const taskDetails = await crmApi.getTask(t.id);
+                                console.log('Task details received:', taskDetails);
                                 setSelectedTaskDetails(taskDetails);
                                 setViewTaskModalOpen(true);
                               } catch (err) {
@@ -2063,8 +2065,8 @@ export default function App() {
       {/* View Task Details Modal */}
       {viewTaskModalOpen && selectedTaskDetails && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full">
-            <div className="border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 bg-white">
               <h2 className="text-xl font-bold text-slate-900">Task Details</h2>
               <button
                 onClick={() => {
@@ -2083,19 +2085,21 @@ export default function App() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-indigo-600 font-semibold mb-1">ASSOCIATED LEAD</p>
-                    <p className="font-semibold text-slate-900">{selectedTaskDetails.leadName}</p>
-                    <p className="text-sm text-slate-600">{selectedTaskDetails.leadNumber} • {selectedTaskDetails.leadPhone}</p>
+                    <p className="font-semibold text-slate-900">{selectedTaskDetails?.leadName || 'N/A'}</p>
+                    <p className="text-sm text-slate-600">{selectedTaskDetails?.leadNumber || 'N/A'} • {selectedTaskDetails?.leadPhone || 'N/A'}</p>
                   </div>
-                  <button
-                    onClick={() => {
-                      setViewTaskModalOpen(false);
-                      setSelectedLeadId(selectedTaskDetails.leadId);
-                      setViewLeadModalOpen(true);
-                    }}
-                    className="px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium"
-                  >
-                    View Lead →
-                  </button>
+                  {selectedTaskDetails?.leadId && (
+                    <button
+                      onClick={() => {
+                        setViewTaskModalOpen(false);
+                        setSelectedLeadId(selectedTaskDetails.leadId);
+                        setViewLeadModalOpen(true);
+                      }}
+                      className="px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium"
+                    >
+                      View Lead →
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -2104,64 +2108,64 @@ export default function App() {
                 <div>
                   <p className="text-xs text-slate-500 font-semibold mb-1">STATUS</p>
                   <span className={`inline-block px-2 py-1 rounded text-sm font-medium ${
-                    selectedTaskDetails.status === 'Completed' 
+                    selectedTaskDetails?.status === 'Completed' 
                       ? 'bg-emerald-100 text-emerald-700' 
                       : 'bg-amber-100 text-amber-800'
                   }`}>
-                    {selectedTaskDetails.status}
+                    {selectedTaskDetails?.status || 'N/A'}
                   </span>
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 font-semibold mb-1">ACTIVITY TYPE</p>
                   <span className="inline-block px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm font-semibold">
-                    {selectedTaskDetails.activityType}
+                    {selectedTaskDetails?.activityType || 'N/A'}
                   </span>
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 font-semibold mb-1">STAGE</p>
-                  <p className="font-semibold text-amber-700">{selectedTaskDetails.stage}</p>
+                  <p className="font-semibold text-amber-700">{selectedTaskDetails?.stage || 'N/A'}</p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 font-semibold mb-1">SCHEDULE DATE</p>
-                  <p className="font-medium text-slate-900">{fmtDate(selectedTaskDetails.scheduleDate)}</p>
+                  <p className="font-medium text-slate-900">{selectedTaskDetails?.scheduleDate ? fmtDate(selectedTaskDetails.scheduleDate) : 'N/A'}</p>
                 </div>
               </div>
 
               <div>
                 <p className="text-xs text-slate-500 font-semibold mb-1">TITLE</p>
-                <p className="font-semibold text-slate-900">{selectedTaskDetails.title}</p>
+                <p className="font-semibold text-slate-900">{selectedTaskDetails?.title || 'N/A'}</p>
               </div>
 
               <div>
                 <p className="text-xs text-slate-500 font-semibold mb-1">REMARK</p>
-                <p className="text-slate-700">{selectedTaskDetails.remark}</p>
+                <p className="text-slate-700">{selectedTaskDetails?.remark || 'No remarks'}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-slate-500 font-semibold mb-1">ASSIGNED BY</p>
-                  <p className="text-slate-900">{selectedTaskDetails.assignedBy}</p>
+                  <p className="text-slate-900">{selectedTaskDetails?.assignedBy || 'N/A'}</p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 font-semibold mb-1">ASSIGNED TO</p>
-                  <p className="text-slate-900">{selectedTaskDetails.assignedTo}</p>
+                  <p className="text-slate-900">{selectedTaskDetails?.assignedTo || 'N/A'}</p>
                 </div>
               </div>
 
-              {selectedTaskDetails.status === 'Completed' && (
+              {selectedTaskDetails?.status === 'Completed' && (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
                   <p className="text-xs text-emerald-600 font-semibold mb-1">COMPLETED</p>
-                  <p className="text-sm text-slate-900">{selectedTaskDetails.completedOn}</p>
-                  <p className="text-sm text-slate-600">by {selectedTaskDetails.completedBy}</p>
+                  <p className="text-sm text-slate-900">{selectedTaskDetails?.completedOn || 'N/A'}</p>
+                  <p className="text-sm text-slate-600">by {selectedTaskDetails?.completedBy || 'N/A'}</p>
                 </div>
               )}
 
               {/* Actions */}
               <div className="flex gap-2 pt-4 border-t border-slate-200">
-                {selectedTaskDetails.status !== 'Completed' && (
+                {selectedTaskDetails?.status !== 'Completed' && (
                   <button
                     onClick={async () => {
-                      const outcome = window.prompt('Enter call/visit outcome remark:', selectedTaskDetails.remark);
+                      const outcome = window.prompt('Enter call/visit outcome remark:', selectedTaskDetails?.remark || '');
                       if (outcome !== null) {
                         await crmApi.completeTask(selectedTaskDetails.id, { outcomeRemark: outcome });
                         setViewTaskModalOpen(false);
