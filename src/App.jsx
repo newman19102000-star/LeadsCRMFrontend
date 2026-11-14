@@ -1493,9 +1493,37 @@ export default function App() {
                         <tr key={u.id} className={`hover:bg-slate-50 transition ${!u.isActive ? 'opacity-40' : ''}`}>
                           {/* Member */}
                           <td className="py-3 px-4">
-                            <div className="font-semibold text-slate-900">{u.name}</div>
-                            <div className="text-slate-500 text-[11px]">{u.email}</div>
-                            {u.phone && <div className="text-slate-400 text-[11px]">{u.phone}</div>}
+                            <div className="flex items-start gap-2">
+                              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${
+                                !u.isActive ? 'bg-slate-400' :
+                                isOnHoliday ? 'bg-orange-400' :
+                                isAbsent ? 'bg-amber-400' :
+                                'bg-indigo-500'
+                              }`}>
+                                {u.name.charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <div className="font-semibold text-slate-900 flex items-center gap-1.5">
+                                  {u.name}
+                                  {isAbsent && !isOnHoliday && (
+                                    <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[9px] font-bold">ABSENT</span>
+                                  )}
+                                  {isOnHoliday && (
+                                    <span className="px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded text-[9px] font-bold">ON LEAVE</span>
+                                  )}
+                                  {!u.isActive && (
+                                    <span className="px-1.5 py-0.5 bg-rose-100 text-rose-700 rounded text-[9px] font-bold">INACTIVE</span>
+                                  )}
+                                </div>
+                                <div className="text-slate-500 text-[11px]">{u.email}</div>
+                                {u.phone && <div className="text-slate-400 text-[11px]">{u.phone}</div>}
+                                {isOnHoliday && (
+                                  <div className="text-orange-600 text-[10px] mt-0.5">
+                                    Leave: {new Date(u.holidayStart).toLocaleDateString('en-IN', {day:'numeric',month:'short'})} → {new Date(u.holidayEnd).toLocaleDateString('en-IN', {day:'numeric',month:'short'})}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </td>
                           {/* Role */}
                           <td className="py-3 px-4">
