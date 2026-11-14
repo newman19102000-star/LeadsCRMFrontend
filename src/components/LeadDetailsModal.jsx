@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, FileText, Clock, CheckSquare, Home, Phone, Mail, MapPin, Calendar, Tag } from 'lucide-react';
+import { X, User, FileText, Clock, CheckSquare, Home, Phone, Mail, MapPin, Calendar, Tag, Eye } from 'lucide-react';
 import { crmApi } from '../api/crmApi';
 
 const LeadDetailsModal = ({ leadId, isOpen, onClose, onNavigateToTask }) => {
