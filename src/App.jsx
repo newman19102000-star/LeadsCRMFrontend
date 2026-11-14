@@ -970,7 +970,7 @@ export default function App() {
               {[
                 { key: 'today', label: "Today's Task", val: tasksData.counts?.todaysTask ?? 0 },
                 { key: 'upcoming', label: 'Upcoming Task', val: tasksData.counts?.upcomingTask ?? 0 },
-                { key: 'pending', label: 'Pending Tasks (Overdue)', val: tasksData.counts?.pendingTasks ?? 0 },
+                { key: 'pending', label: 'Overdue Tasks', val: tasksData.counts?.pendingTasks ?? 0 },
                 { key: 'completed', label: 'Completed Tasks', val: tasksData.counts?.completedTasks ?? 0 },
               ].map((t) => (
                 <button
@@ -2224,9 +2224,7 @@ export default function App() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 bg-white">
-              <h2 className="text-xl font-bold text-slate-900">
-                {selectedTaskDetails?.status === 'Completed' ? 'Task Details' : 'Update Task'}
-              </h2>
+              <h2 className="text-xl font-bold text-slate-900">Task Details</h2>
               <button
                 onClick={() => {
                   setViewTaskModalOpen(false);
@@ -2238,46 +2236,7 @@ export default function App() {
               </button>
             </div>
 
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const formData = new FormData(e.target);
-                
-                try {
-                  // Update lead stage and details
-                  await crmApi.changeStage(selectedTaskDetails.leadId, {
-                    stage: formData.get('stage'),
-                    stageReason: formData.get('stageReason'),
-                    name: formData.get('name'),
-                    primaryNo: formData.get('primaryNo'),
-                    status: formData.get('status'),
-                    requirement: formData.get('requirement'),
-                    subLocation: formData.get('subLocation'),
-                    budget: formData.get('budget'),
-                    ethnicity: formData.get('ethnicity'),
-                    tags: formData.get('tags')
-                  });
-                  
-                  // Add new task
-                  await crmApi.addTask(selectedTaskDetails.leadId, {
-                    scheduleDate: formData.get('scheduleDate'),
-                    title: formData.get('title'),
-                    remark: formData.get('remark'),
-                    activityType: formData.get('activityType'),
-                    assignToRole: formData.get('ownerRole'),
-                    assignToId: parseInt(formData.get('teamMemberId'))
-                  });
-                  
-                  setViewTaskModalOpen(false);
-                  setSelectedTaskDetails(null);
-                  refreshAll();
-                } catch (err) {
-                  console.error('Failed updating task:', err);
-                  alert('Failed to update task. Please try again.');
-                }
-              }}
-              className="p-6 space-y-4"
-            >
+            <div className="p-6 space-y-4">
               {/* Lead Info - Read Only */}
               <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
                 <div className="flex items-center justify-between">
@@ -2302,176 +2261,151 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Current Task Status - Read Only */}
+              {/* Task Status Selector */}
               <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-                <p className="text-xs text-slate-500 font-semibold mb-2">CURRENT TASK STATUS</p>
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                      selectedTaskDetails?.status === 'Completed' 
-                        ? 'bg-emerald-100 text-emerald-700' 
-                        : 'bg-amber-100 text-amber-800'
-                    }`}>
-                      {selectedTaskDetails?.status || 'N/A'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="inline-block px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-semibold">
-                      {selectedTaskDetails?.activityType || 'N/A'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-amber-700 text-xs">{selectedTaskDetails?.stage || 'N/A'}</span>
-                  </div>
-                </div>
-                <div className="mt-2 text-xs text-slate-600">
-                  <p><strong>Title:</strong> {selectedTaskDetails?.title || 'N/A'}</p>
-                  <p><strong>Remark:</strong> {selectedTaskDetails?.remark || 'No remarks'}</p>
-                  <p><strong>Scheduled:</strong> {selectedTaskDetails?.scheduleDate ? fmtDate(selectedTaskDetails.scheduleDate) : 'N/A'}</p>
+                <label className="block text-xs font-semibold text-slate-700 mb-2">TASK STATUS</label>
+                <div className="grid grid-cols-5 gap-2">
+                  {['To Do', 'In Progress', 'Pending', 'Deferred', 'Completed'].map((s) => {
+                    const isActive = selectedTaskDetails?.status === s;
+                    const colors = {
+                      'To Do': 'bg-slate-200 text-slate-800',
+                      'In Progress': 'bg-blue-100 text-blue-700',
+                      'Pending': 'bg-amber-100 text-amber-700',
+                      'Deferred': 'bg-orange-100 text-orange-700',
+                      'Completed': 'bg-emerald-100 text-emerald-700'
+                    };
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => {
+                          setSelectedTaskDetails({ ...selectedTaskDetails, status: s });
+                          // Auto-set "In Progress" visual cue when leaving "To Do"
+                        }}
+                        className={`px-2 py-1.5 rounded text-[11px] font-medium border transition ${
+                          isActive
+                            ? `${colors[s]} border-current ring-1 ring-current`
+                            : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              {selectedTaskDetails?.status !== 'Completed' && (
-                <>
-                  {/* Update Lead Stage */}
-                  <div className="border-t border-slate-200 pt-4">
-                    <h3 className="text-sm font-bold text-slate-900 mb-3">Update Lead Stage & Details</h3>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">Lead Stage</label>
-                        <select name="stage" defaultValue={selectedTaskDetails?.stage || 'CALL BACK'} className="w-full border border-slate-300 rounded px-2 py-1.5 text-xs">
-                          <option value="NEW LEAD">NEW LEAD</option>
-                          <option value="CALL BACK">CALL BACK</option>
-                          <option value="SITE VISIT">SITE VISIT</option>
-                          <option value="MEETING">MEETING</option>
-                          <option value="NEGOTIATION">NEGOTIATION</option>
-                          <option value="CONVERTED">CONVERTED</option>
-                          <option value="NOT INTERESTED">NOT INTERESTED</option>
-                          <option value="JUNK">JUNK</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">Stage Reason</label>
-                        <input 
-                          type="text" 
-                          name="stageReason" 
-                          defaultValue={selectedTaskDetails?.stageReason || ''} 
-                          className="w-full border border-slate-300 rounded px-2 py-1.5 text-xs" 
-                        />
-                      </div>
-                    </div>
+              {/* Editable Task Fields */}
+              <div className="border-t border-slate-200 pt-4">
+                <h3 className="text-sm font-bold text-slate-900 mb-3">Task Details</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Activity Type</label>
+                    <select
+                      id="taskActivityType"
+                      defaultValue={selectedTaskDetails?.activityType || 'CALL'}
+                      className="w-full border border-slate-300 rounded px-2 py-1.5 text-xs"
+                    >
+                      <option value="CALL">CALL</option>
+                      <option value="SITE VISIT">SITE VISIT</option>
+                      <option value="MEETING">MEETING</option>
+                      <option value="EMAIL">EMAIL</option>
+                    </select>
                   </div>
-
-                  {/* Create New Task */}
-                  <div className="border-t border-slate-200 pt-4">
-                    <h3 className="text-sm font-bold text-slate-900 mb-3">Create Follow-up Task</h3>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">Activity Type</label>
-                        <select name="activityType" defaultValue="CALL" className="w-full border border-slate-300 rounded px-2 py-1.5 text-xs">
-                          <option value="CALL">CALL</option>
-                          <option value="SITE VISIT">SITE VISIT</option>
-                          <option value="MEETING">MEETING</option>
-                          <option value="EMAIL">EMAIL</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">Schedule Date & Time</label>
-                        <input 
-                          type="datetime-local" 
-                          name="scheduleDate" 
-                          defaultValue={new Date(Date.now() + 3600 * 1000).toISOString().slice(0, 16)}
-                          className="w-full border border-slate-300 rounded px-2 py-1.5 text-xs" 
-                          required
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">Task Title</label>
-                        <input 
-                          type="text" 
-                          name="title" 
-                          defaultValue={`Followup with ${selectedTaskDetails?.leadName}`}
-                          className="w-full border border-slate-300 rounded px-2 py-1.5 text-xs" 
-                          required
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">Remark / Notes</label>
-                        <textarea 
-                          name="remark" 
-                          rows="2"
-                          defaultValue={selectedTaskDetails?.remark || ''}
-                          className="w-full border border-slate-300 rounded px-2 py-1.5 text-xs"
-                        ></textarea>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">Assign To Role</label>
-                        <select name="ownerRole" defaultValue="PreSales" className="w-full border border-slate-300 rounded px-2 py-1.5 text-xs">
-                          <option value="PreSales">PreSales</option>
-                          <option value="Sales">Sales</option>
-                          <option value="SourcingManager">Sourcing Manager</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">Assign To Person</label>
-                        <select name="teamMemberId" defaultValue={currentUser?.id} className="w-full border border-slate-300 rounded px-2 py-1.5 text-xs">
-                          {(lookups.teamMembers || []).map(tm => (
-                            <option key={tm.id} value={tm.id}>{tm.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Lead Stage</label>
+                    <select
+                      id="taskStage"
+                      defaultValue={selectedTaskDetails?.stage || 'CALL BACK'}
+                      className="w-full border border-slate-300 rounded px-2 py-1.5 text-xs"
+                    >
+                      <option value="NEW LEAD">NEW LEAD</option>
+                      <option value="CALL BACK">CALL BACK</option>
+                      <option value="SITE VISIT">SITE VISIT</option>
+                      <option value="MEETING">MEETING</option>
+                      <option value="NEGOTIATION">NEGOTIATION</option>
+                      <option value="CONVERTED">CONVERTED</option>
+                      <option value="NOT INTERESTED">NOT INTERESTED</option>
+                      <option value="JUNK">JUNK</option>
+                    </select>
                   </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Schedule Date & Time</label>
+                    <input
+                      type="datetime-local"
+                      id="taskScheduleDate"
+                      defaultValue={selectedTaskDetails?.scheduleDate ? new Date(selectedTaskDetails.scheduleDate).toISOString().slice(0, 16) : new Date(Date.now() + 3600 * 1000).toISOString().slice(0, 16)}
+                      className="w-full border border-slate-300 rounded px-2 py-1.5 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Assign To</label>
+                    <select
+                      id="taskAssignedTo"
+                      defaultValue={currentUser?.id}
+                      className="w-full border border-slate-300 rounded px-2 py-1.5 text-xs"
+                    >
+                      {(lookups.teamMembers || []).map(tm => (
+                        <option key={tm.id} value={tm.id}>{tm.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Task Title</label>
+                    <input
+                      type="text"
+                      id="taskTitle"
+                      defaultValue={selectedTaskDetails?.title || `Followup with ${selectedTaskDetails?.leadName}`}
+                      className="w-full border border-slate-300 rounded px-2 py-1.5 text-xs"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Remark / Notes</label>
+                    <textarea
+                      id="taskRemark"
+                      rows="2"
+                      defaultValue={selectedTaskDetails?.remark || ''}
+                      className="w-full border border-slate-300 rounded px-2 py-1.5 text-xs"
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
 
-                  {/* Hidden fields for lead data */}
-                  <input type="hidden" name="name" value={selectedTaskDetails?.leadName || ''} />
-                  <input type="hidden" name="primaryNo" value={selectedTaskDetails?.leadPhone || ''} />
-                  <input type="hidden" name="status" value="Active" />
-                  <input type="hidden" name="requirement" value="" />
-                  <input type="hidden" name="subLocation" value="" />
-                  <input type="hidden" name="budget" value="" />
-                  <input type="hidden" name="ethnicity" value="" />
-                  <input type="hidden" name="tags" value="" />
-                </>
-              )}
-
+              {/* Completion Info if Completed */}
               {selectedTaskDetails?.status === 'Completed' && (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
                   <p className="text-xs text-emerald-600 font-semibold mb-1">TASK COMPLETED</p>
                   <p className="text-sm text-slate-900">{selectedTaskDetails?.completedOn || 'N/A'}</p>
                   <p className="text-sm text-slate-600">by {selectedTaskDetails?.completedBy || 'N/A'}</p>
-                  <p className="text-xs text-slate-500 mt-2">This task is completed and cannot be edited. You can create a new task for this lead instead.</p>
                 </div>
               )}
 
               {/* Actions */}
               <div className="flex gap-2 pt-4 border-t border-slate-200">
-                {selectedTaskDetails?.status !== 'Completed' && (
-                  <>
-                    <button
-                      type="submit"
-                      className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium"
-                    >
-                      Update Stage & Create Task
-                    </button>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const outcome = window.prompt('Enter call/visit outcome remark:', selectedTaskDetails?.remark || '');
-                        if (outcome !== null) {
-                          await crmApi.completeTask(selectedTaskDetails.id, { outcomeRemark: outcome });
-                          setViewTaskModalOpen(false);
-                          refreshAll();
-                        }
-                      }}
-                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium"
-                    >
-                      Mark as Done
-                    </button>
-                  </>
-                )}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await crmApi.updateTask(selectedTaskDetails.id, {
+                        status: selectedTaskDetails.status,
+                        activityType: document.getElementById('taskActivityType').value,
+                        stage: document.getElementById('taskStage').value,
+                        scheduleDate: document.getElementById('taskScheduleDate').value,
+                        title: document.getElementById('taskTitle').value,
+                        remark: document.getElementById('taskRemark').value,
+                        assignedToId: parseInt(document.getElementById('taskAssignedTo').value)
+                      });
+                      setViewTaskModalOpen(false);
+                      refreshAll();
+                    } catch (err) {
+                      console.error('Failed updating task:', err);
+                      alert('Failed to update task. Please try again.');
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium"
+                >
+                  Save Changes
+                </button>
                 <button
                   type="button"
                   onClick={() => setViewTaskModalOpen(false)}
@@ -2480,7 +2414,7 @@ export default function App() {
                   Close
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}

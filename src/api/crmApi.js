@@ -55,6 +55,8 @@ export const crmApi = {
     api.get(`/tasks/lead/${leadId}`).then(r => r.data),
   completeTask: (taskId, payload) =>
     api.post(`/tasks/${taskId}/complete`, payload).then(r => r.data),
+  updateTask: (taskId, payload) =>
+    api.put(`/tasks/${taskId}`, payload).then(r => r.data),
 
   // Meta Campaigns Page APIs
   getCampaigns: () => api.get('/campaigns').then(r => r.data),
