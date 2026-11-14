@@ -801,91 +801,7 @@ export default function App() {
             </div>
 
             {/* 22-COLUMN LEADS TABLE */}
-            {/* ── MOBILE: Lead Cards ── */}
-            <div className="sm:hidden space-y-3">
-              {loadingLeads ? (
-                <div className="py-12 text-center text-slate-400">Loading leads...</div>
-              ) : (leadsData.data || []).length === 0 ? (
-                <div className="py-12 text-center text-slate-400">No leads found.</div>
-              ) : (leadsData.data || []).map((r) => (
-                <div
-                  key={r.id}
-                  className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"
-                >
-                  {/* Click body → View Details */}
-                  <button
-                    className="w-full text-left px-4 pt-3 pb-2"
-                    onClick={() => { setSelectedLeadId(r.id); setViewLeadModalOpen(true); }}
-                  >
-                    {/* Top row: lead ID + date */}
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-mono text-[10px] text-indigo-500 font-semibold">{r.leadId}</span>
-                      <span className="text-[10px] text-slate-400">{fmtDate(r.date)}</span>
-                    </div>
-                    {/* Name + phone */}
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-bold text-slate-900 text-sm">{r.name}</span>
-                      {r.inquiryCount > 1 && (
-                        <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-semibold">Re-Inquiry ×{r.inquiryCount}</span>
-                      )}
-                    </div>
-                    <div className="text-[11px] text-slate-500 font-mono mt-0.5">{r.primaryNo}</div>
-                    {/* Info snippets */}
-                    <div className="mt-2 text-[11px] text-slate-600 space-y-0.5">
-                      {r.project && <div><span className="text-slate-400">Project:</span> {r.project}</div>}
-                      {r.source && <div><span className="text-slate-400">Source:</span> {r.source}</div>}
-                      {r.requirement && <div className="line-clamp-1"><span className="text-slate-400">Req:</span> {r.requirement}</div>}
-                      {r.budget && <div><span className="text-slate-400">Budget:</span> {r.budget}</div>}
-                      {r.preSalesAgent && <div><span className="text-slate-400">Agent:</span> {r.preSalesAgent}</div>}
-                    </div>
-                  </button>
-                  {/* Bottom bar: status + stage + tags + kebab */}
-                  <div className="flex items-center justify-between px-4 py-2 border-t border-slate-100 bg-slate-50/60">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                        r.status === 'Hot' ? 'bg-rose-100 text-rose-700' :
-                        r.status === 'Warm' ? 'bg-amber-100 text-amber-700' :
-                        r.status === 'Booked' ? 'bg-emerald-100 text-emerald-700' :
-                        'bg-blue-100 text-blue-700'
-                      }`}>{r.status}</span>
-                      {r.leadStage && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-100 text-indigo-700">{r.leadStage}</span>
-                      )}
-                      {r.tags && r.tags.split(',').slice(0, 2).map(tag => tag.trim()).filter(Boolean).map(tag => (
-                        <span key={tag} className="px-1.5 py-0.5 rounded text-[9px] bg-slate-200 text-slate-600">{tag}</span>
-                      ))}
-                    </div>
-                    {/* Kebab */}
-                    <div className="relative action-menu-container">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setOpenMenuLeadId(openMenuLeadId === r.id ? null : r.id); }}
-                        className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500"
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
-                      {openMenuLeadId === r.id && (
-                        <div className="absolute right-0 bottom-8 w-52 bg-white border border-slate-200 rounded-xl shadow-2xl py-1 z-[100] text-left">
-                          <button onClick={() => handleRowAction('add_task', r)} className="w-full px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs"><Calendar className="w-3.5 h-3.5 text-indigo-600" /> Add Task / Update Stage</button>
-                          <button onClick={() => handleRowAction('view', r)} className="w-full px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs"><Eye className="w-3.5 h-3.5 text-blue-600" /> View Details</button>
-                          <button onClick={() => handleRowAction('convert', r)} className="w-full px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs"><CheckSquare className="w-3.5 h-3.5 text-emerald-600" /> Convert to Contact</button>
-                          {isAdmin && <button onClick={() => handleRowAction('transfer', r)} className="w-full px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs"><ArrowRightLeft className="w-3.5 h-3.5 text-amber-600" /> Transfer Lead</button>}
-                          <button onClick={() => handleRowAction('add_owner', r)} className="w-full px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs"><UserPlus className="w-3.5 h-3.5 text-blue-600" /> Add Owner</button>
-                          <button onClick={() => handleRowAction('remove_owner', r)} className="w-full px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs"><Users className="w-3.5 h-3.5 text-rose-500" /> Remove Lead Owner</button>
-                          <button onClick={() => handleRowAction('add_cp', r)} className="w-full px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs"><Building2 className="w-3.5 h-3.5 text-indigo-600" /> Add Channel Partner</button>
-                          <button onClick={() => handleRowAction('remove_cp', r)} className="w-full px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs"><Building2 className="w-3.5 h-3.5 text-rose-500" /> Remove Channel Partner</button>
-                          <button onClick={() => handleRowAction('suggest_property', r)} className="w-full px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs"><Building2 className="w-3.5 h-3.5 text-emerald-600" /> Suggested Property</button>
-                          <button onClick={() => handleRowAction('edit', r)} className="w-full px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs"><Edit3 className="w-3.5 h-3.5 text-slate-600" /> Edit</button>
-                          {isAdmin && <><hr className="my-1 border-slate-100" /><button onClick={() => handleRowAction('delete', r)} className="w-full px-3 py-2 hover:bg-rose-50 text-rose-600 flex items-center gap-2 text-xs"><Trash2 className="w-3.5 h-3.5" /> Delete</button></>}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* ── DESKTOP: Leads Table ── */}
-            <div className="hidden sm:block bg-white rounded-lg border border-slate-200 shadow-sm overflow-x-auto">
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
                 <thead>
                   <tr className="bg-slate-50 text-slate-700 font-semibold border-b-2 border-slate-300 uppercase text-[10px] tracking-wide">
@@ -1041,7 +957,7 @@ export default function App() {
                   )}
                 </tbody>
               </table>
-            </div>{/* end desktop leads table */}
+            </div>
 
             {/* Leads Pagination */}
             {leadsData.totalCount > 0 && (
@@ -1098,64 +1014,7 @@ export default function App() {
               ))}
             </div>
 
-            {/* ── MOBILE: Task Cards ── */}
-            <div className="sm:hidden space-y-3">
-              {loadingTasks ? (
-                <div className="py-12 text-center text-slate-400">Loading tasks...</div>
-              ) : (tasksData.data || []).length === 0 ? (
-                <div className="py-12 text-center text-slate-400">No tasks in this bucket.</div>
-              ) : (tasksData.data || []).map((t) => (
-                <div key={t.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                  <button
-                    className="w-full text-left px-4 pt-3 pb-2"
-                    onClick={async () => {
-                      try {
-                        const taskDetails = await crmApi.getTask(t.id);
-                        setSelectedTaskDetails(taskDetails);
-                        setViewTaskModalOpen(true);
-                      } catch { alert('Could not load task details.'); }
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-[10px] font-bold">{t.activityType}</span>
-                      <span className="text-[10px] text-slate-400">{fmtDate(t.scheduleDate)}</span>
-                    </div>
-                    <div className="font-bold text-slate-900 text-sm">{t.lead}</div>
-                    <div className="text-[11px] text-slate-500 font-mono mt-0.5">{t.mobile}</div>
-                    {t.title && <div className="mt-1.5 text-[11px] font-semibold text-slate-700">{t.title}</div>}
-                    {t.remark && <div className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{t.remark}</div>}
-                    <div className="mt-1.5 text-[11px] text-slate-500 space-y-0.5">
-                      {t.assignedTo && <div><span className="text-slate-400">Assigned to:</span> {t.assignedTo}</div>}
-                      {t.preSalesAgent && <div><span className="text-slate-400">Pre-Sales:</span> {t.preSalesAgent}</div>}
-                    </div>
-                  </button>
-                  <div className="flex items-center justify-between px-4 py-2 border-t border-slate-100 bg-slate-50/60">
-                    <div className="flex items-center gap-1.5">
-                      {t.stage && <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700">{t.stage}</span>}
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                        t.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'
-                      }`}>{t.status}</span>
-                    </div>
-                    <button
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        try {
-                          const taskDetails = await crmApi.getTask(t.id);
-                          setSelectedTaskDetails(taskDetails);
-                          setViewTaskModalOpen(true);
-                        } catch { alert('Could not load task details.'); }
-                      }}
-                      className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[11px] font-medium flex items-center gap-1"
-                    >
-                      <Eye className="w-3 h-3" /> View
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* ── DESKTOP: Tasks Table ── */}
-            <div className="hidden sm:block bg-white rounded-lg border border-slate-200 shadow-xs overflow-x-auto">
+            <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
                 <thead>
                   <tr className="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200 uppercase">
@@ -1253,7 +1112,7 @@ export default function App() {
                   )}
                 </tbody>
               </table>
-            </div>{/* end desktop tasks table */}
+            </div>
 
             {/* Tasks Pagination */}
             {(tasksData?.totalCount > 0) && (
