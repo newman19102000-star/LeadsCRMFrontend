@@ -1371,7 +1371,7 @@ export default function App() {
               </table>
             </div>
           </div>
-        ) : (
+        ) : activePage === 'team' ? (
           /* TEAM & ACCESS CONTROL WORKSPACE (ADMIN ONLY) */
           <div className="px-3 sm:px-6 py-4 sm:py-6 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
             <div className="bg-white rounded-lg border border-slate-200 p-4 sm:p-5 shadow-xs">
@@ -1711,7 +1711,7 @@ export default function App() {
               )}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* PROJECTS PAGE */}
         {activePage === 'projects' && (
