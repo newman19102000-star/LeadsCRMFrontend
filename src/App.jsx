@@ -214,7 +214,9 @@ export default function App() {
   // Close dropdown menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (openMenuLeadId && !event.target.closest('.action-menu-container')) {
+      if (openMenuLeadId && 
+          !event.target.closest('.action-menu-container') &&
+          !event.target.closest('.mobile-action-sheet')) {
         setOpenMenuLeadId(null);
       }
     };
@@ -398,6 +400,7 @@ export default function App() {
   const handleRowAction = async (action, lead) => {
     setOpenMenuLeadId(null);
 
+    try {
     if (action === 'add_task') {
       // Check if lead has existing tasks
       try {
@@ -458,6 +461,10 @@ export default function App() {
       tags: (lead.tags || []).join(',')
     });
     setActiveModal({ type: action, lead });
+    } catch (err) {
+      console.error('handleRowAction error:', err);
+      alert('Action failed: ' + (err?.message || err));
+    }
   };
 
   const submitModal = async (e) => {
@@ -1437,7 +1444,7 @@ export default function App() {
                     placeholder="e.g. Neha Kulkarni"
                     value={newUserForm.name}
                     onChange={(e) => setNewUserForm({ ...newUserForm, name: e.target.value })}
-                    className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
+                    className="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs sm:text-sm"
                   />
                 </div>
                 <div>
@@ -1448,7 +1455,7 @@ export default function App() {
                     placeholder="neha@company.com"
                     value={newUserForm.email}
                     onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
-                    className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
+                    className="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs sm:text-sm"
                   />
                 </div>
                 <div>
@@ -1458,7 +1465,7 @@ export default function App() {
     placeholder="e.g. +91-9820011223"
     value={newUserForm.phone}
     onChange={(e) => setNewUserForm({ ...newUserForm, phone: e.target.value })}
-    className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-mono"
+    className="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs sm:text-sm font-mono"
   />
 </div>
                 <div>
@@ -1469,7 +1476,7 @@ export default function App() {
                     placeholder="••••••••"
                     value={newUserForm.password}
                     onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
-                    className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
+                    className="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs sm:text-sm"
                   />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
@@ -1478,7 +1485,7 @@ export default function App() {
                     <select
                       value={newUserForm.departmentRole}
                       onChange={(e) => setNewUserForm({ ...newUserForm, departmentRole: e.target.value })}
-                      className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
+                      className="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs sm:text-sm"
                     >
                       <option value="PreSales">Pre-Sales (Round-Robin)</option>
                       <option value="Sales">Sales (Closing)</option>
@@ -1490,7 +1497,7 @@ export default function App() {
                     <select
                       value={newUserForm.accessRole}
                       onChange={(e) => setNewUserForm({ ...newUserForm, accessRole: e.target.value })}
-                      className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
+                      className="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs sm:text-sm"
                     >
                       <option value="Worker">Worker</option>
                       <option value="CompanyAdmin">Company Admin</option>
@@ -1954,7 +1961,7 @@ export default function App() {
                   placeholder="e.g. Skyline Luxury Residences"
                   value={manualPageForm.pageName}
                   onChange={(e) => setManualPageForm({ ...manualPageForm, pageName: e.target.value })}
-                  className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
+                  className="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs sm:text-sm"
                 />
               </div>
               <div>
@@ -1965,7 +1972,7 @@ export default function App() {
                   placeholder="e.g. 924782454049982"
                   value={manualPageForm.pageId}
                   onChange={(e) => setManualPageForm({ ...manualPageForm, pageId: e.target.value })}
-                  className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-mono"
+                  className="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs sm:text-sm font-mono"
                 />
               </div>
               <div>
@@ -1976,7 +1983,7 @@ export default function App() {
                   placeholder="EAA..."
                   value={manualPageForm.pageAccessToken}
                   onChange={(e) => setManualPageForm({ ...manualPageForm, pageAccessToken: e.target.value })}
-                  className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-mono"
+                  className="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs sm:text-sm font-mono"
                 />
               </div>
               <div>
@@ -1984,7 +1991,7 @@ export default function App() {
                 <select
                   value={manualPageForm.defaultProjectId}
                   onChange={(e) => setManualPageForm({ ...manualPageForm, defaultProjectId: e.target.value })}
-                  className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
+                  className="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs sm:text-sm"
                 >
                   <option value="">-- Use Campaign Mapping --</option>
                   {(lookups.projects || []).map(p => (
@@ -2007,26 +2014,22 @@ export default function App() {
 
       {/* MODAL FOR ROW ACTIONS */}
       {activeModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-sm shadow-2xl max-h-[85vh] flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 flex-shrink-0">
-              <div>
-                <h3 className="font-bold text-sm uppercase tracking-wide text-slate-800 leading-tight">
-                  {activeModal.type.replaceAll('_', ' ')}
-                </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5 truncate">{activeModal.lead.name}</p>
-              </div>
-              <button onClick={() => setActiveModal(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 flex-shrink-0">✕</button>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-xl max-w-sm w-full shadow-2xl max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between border-b px-4 py-3 flex-shrink-0">
+              <h3 className="font-bold text-xs uppercase tracking-wide text-slate-800 truncate pr-2">
+                {activeModal.type.replaceAll('_', ' ')} — {activeModal.lead.name}
+              </h3>
+              <button onClick={() => setActiveModal(null)} className="text-slate-400 hover:text-slate-600 font-bold text-xl shrink-0">✕</button>
             </div>
 
             {activeModal.type !== 'view' && (
               <form onSubmit={submitModal} className="flex flex-col flex-1 min-h-0">
-                <div className="overflow-y-auto flex-1 px-4 py-3 space-y-3 text-sm">
+                <div className="overflow-y-auto flex-1 px-4 py-3 space-y-2.5 text-xs">
                 {activeModal.type === 'add_task' && (
                   <>
                     <div>
-                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Lead Stage</label>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Lead Stage</label>
                       <select
                         value={formState.stage}
                         onChange={(e) => {
@@ -2037,17 +2040,17 @@ export default function App() {
                             stageReason: st?.allowedReasons?.[0] || ''
                           });
                         }}
-                        className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
+                        className="w-full border border-slate-300 rounded px-2.5 py-1.5"
                       >
                         {(lookups.stages || []).map(s => <option key={s.stage} value={s.stage}>{s.stage}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Stage Reason</label>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Stage Reason</label>
                       <select
                         value={formState.stageReason}
                         onChange={(e) => setFormState({ ...formState, stageReason: e.target.value })}
-                        className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
+                        className="w-full border border-slate-300 rounded px-2.5 py-1.5"
                       >
                         {((lookups.stages || []).find(s => s.stage === formState.stage)?.allowedReasons || []).map(r => (
                           <option key={r} value={r}>{r}</option>
@@ -2056,11 +2059,11 @@ export default function App() {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Activity Type</label>
+                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">Activity Type</label>
                         <select
                           value={formState.activityType}
                           onChange={(e) => setFormState({ ...formState, activityType: e.target.value })}
-                          className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
+                          className="w-full border border-slate-300 rounded px-2.5 py-1.5"
                         >
                           <option value="CALL">CALL</option>
                           <option value="SITE VISIT">SITE VISIT</option>
@@ -2069,32 +2072,32 @@ export default function App() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Schedule Date & Time</label>
+                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">Schedule Date & Time</label>
                         <input
                           type="datetime-local"
                           value={formState.scheduleDate}
                           onChange={(e) => setFormState({ ...formState, scheduleDate: e.target.value })}
-                          className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
+                          className="w-full border border-slate-300 rounded px-2.5 py-1.5"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Assign Task To</label>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Assign Task To</label>
                       <select
                         value={formState.teamMemberId}
                         onChange={(e) => setFormState({ ...formState, teamMemberId: e.target.value })}
-                        className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
+                        className="w-full border border-slate-300 rounded px-2.5 py-1.5"
                       >
                         {(lookups.teamMembers || []).map(m => <option key={m.id} value={m.id}>{m.name} ({m.role})</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Remark</label>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Remark</label>
                       <textarea
                         rows={2}
                         value={formState.remark}
                         onChange={(e) => setFormState({ ...formState, remark: e.target.value })}
-                        className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
+                        className="w-full border border-slate-300 rounded px-2.5 py-1.5"
                       />
                     </div>
                   </>
@@ -2103,10 +2106,10 @@ export default function App() {
                 {activeModal.type === 'transfer' && (
                   <>
                     <div>
-                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">New Pre-Sales Agent</label>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">New Pre-Sales Agent</label>
                       <select
                         onChange={(e) => setFormState({ ...formState, preSalesAgentId: e.target.value })}
-                        className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
+                        className="w-full border border-slate-300 rounded px-2.5 py-1.5"
                       >
                         <option value="">-- Keep Current --</option>
                         {(lookups.teamMembers || []).filter(m => m.role === 'PreSales').map(m => (
@@ -2115,10 +2118,10 @@ export default function App() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">New Sales Agent</label>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">New Sales Agent</label>
                       <select
                         onChange={(e) => setFormState({ ...formState, salesAgentId: e.target.value })}
-                        className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
+                        className="w-full border border-slate-300 rounded px-2.5 py-1.5"
                       >
                         <option value="">-- Keep Current --</option>
                         {(lookups.teamMembers || []).filter(m => m.role === 'Sales').map(m => (
@@ -2127,12 +2130,12 @@ export default function App() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Transfer Reason</label>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Transfer Reason</label>
                       <input
                         type="text"
                         value={formState.remark}
                         onChange={(e) => setFormState({ ...formState, remark: e.target.value })}
-                        className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
+                        className="w-full border border-slate-300 rounded px-2.5 py-1.5"
                       />
                     </div>
                   </>
@@ -2141,11 +2144,11 @@ export default function App() {
                 {activeModal.type === 'add_owner' && (
                   <>
                     <div>
-                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Owner Role</label>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Owner Role</label>
                       <select
                         value={formState.ownerRole}
                         onChange={(e) => setFormState({ ...formState, ownerRole: e.target.value })}
-                        className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
+                        className="w-full border border-slate-300 rounded px-2.5 py-1.5"
                       >
                         <option value="PreSales">Pre-Sales Agent</option>
                         <option value="Sales">Sales Agent</option>
@@ -2153,11 +2156,11 @@ export default function App() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Team Member</label>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Team Member</label>
                       <select
                         value={formState.teamMemberId}
                         onChange={(e) => setFormState({ ...formState, teamMemberId: e.target.value })}
-                        className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
+                        className="w-full border border-slate-300 rounded px-2.5 py-1.5"
                       >
                         {(lookups.teamMembers || []).map(m => <option key={m.id} value={m.id}>{m.name} ({m.role})</option>)}
                       </select>
@@ -2167,11 +2170,11 @@ export default function App() {
 
                 {activeModal.type === 'remove_owner' && (
                   <div>
-                    <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Which Owner Role to Remove?</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Which Owner Role to Remove?</label>
                     <select
                       value={formState.ownerRole}
                       onChange={(e) => setFormState({ ...formState, ownerRole: e.target.value })}
-                      className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
+                      className="w-full border border-slate-300 rounded px-2.5 py-1.5"
                     >
                       <option value="PreSales">Pre-Sales Agent</option>
                       <option value="Sales">Sales Agent</option>
@@ -2183,11 +2186,11 @@ export default function App() {
 
                 {activeModal.type === 'add_cp' && (
                   <div>
-                    <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Select Channel Partner</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Select Channel Partner</label>
                     <select
                       value={formState.channelPartnerId}
                       onChange={(e) => setFormState({ ...formState, channelPartnerId: e.target.value })}
-                      className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
+                      className="w-full border border-slate-300 rounded px-2.5 py-1.5"
                     >
                       {(lookups.channelPartners || []).map(cp => (
                         <option key={cp.id} value={cp.id}>{cp.firmName} ({cp.contactName})</option>
@@ -2198,11 +2201,11 @@ export default function App() {
 
                 {activeModal.type === 'suggest_property' && (
                   <div>
-                    <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Select Project to Suggest</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Select Project to Suggest</label>
                     <select
                       value={formState.projectId}
                       onChange={(e) => setFormState({ ...formState, projectId: e.target.value })}
-                      className="w-full border border-slate-300 rounded px-2.5 sm:px-3 py-1.5 sm:py-2"
+                      className="w-full border border-slate-300 rounded px-2.5 py-1.5"
                     >
                       {(lookups.projects || []).map(p => (
                         <option key={p.id} value={p.id}>{p.name} — {p.subLocation} ({p.priceRange})</option>
@@ -2214,46 +2217,42 @@ export default function App() {
                 {activeModal.type === 'edit' && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Name</label>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Name</label>
                       <input type="text" value={formState.name} onChange={e => setFormState({ ...formState, name: e.target.value })} className="w-full border border-slate-300 rounded px-2.5 py-1.5" />
                     </div>
                     <div>
-                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Primary No</label>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Primary No</label>
                       <input type="text" value={formState.primaryNo} onChange={e => setFormState({ ...formState, primaryNo: e.target.value })} className="w-full border border-slate-300 rounded px-2.5 py-1.5" />
                     </div>
                     <div>
-                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Requirement</label>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Requirement</label>
                       <input type="text" value={formState.requirement} onChange={e => setFormState({ ...formState, requirement: e.target.value })} className="w-full border border-slate-300 rounded px-2.5 py-1.5" />
                     </div>
                     <div>
-                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Sub Location</label>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Sub Location</label>
                       <input type="text" value={formState.subLocation} onChange={e => setFormState({ ...formState, subLocation: e.target.value })} className="w-full border border-slate-300 rounded px-2.5 py-1.5" />
                     </div>
                     <div>
-                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Budget</label>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Budget</label>
                       <input type="text" value={formState.budget} onChange={e => setFormState({ ...formState, budget: e.target.value })} className="w-full border border-slate-300 rounded px-2.5 py-1.5" />
                     </div>
                     <div>
-                      <label className="block text-[11px] sm:text-xs font-semibold text-slate-600 mb-1">Ethnicity</label>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Ethnicity</label>
                       <input type="text" value={formState.ethnicity} onChange={e => setFormState({ ...formState, ethnicity: e.target.value })} className="w-full border border-slate-300 rounded px-2.5 py-1.5" />
                     </div>
                   </div>
                 )}
-
-                </div>{/* end scrollable body */}
-                <div className="flex gap-2 px-4 py-3 border-t border-slate-200 flex-shrink-0">
-                  <button type="button" onClick={() => setActiveModal(null)} className="flex-1 px-4 py-2.5 border border-slate-300 rounded-lg text-slate-700 text-sm font-medium">
-                    Cancel
-                  </button>
-                  <button type="submit" className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-semibold text-sm active:bg-indigo-800">
-                    Save
-                  </button>
+                </div>{/* end scroll */}
+                <div className="flex gap-2 px-4 py-3 border-t flex-shrink-0">
+                  <button type="button" onClick={() => setActiveModal(null)} className="flex-1 py-2 border border-slate-300 rounded-lg text-slate-600 text-sm font-medium">Cancel</button>
+                  <button type="submit" className="flex-1 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700">Save</button>
                 </div>
               </form>
             )}
           </div>
         </div>
       )}
+
 
       {/* Configure Campaign Mapping Modal */}
       {editingCampaign && (

@@ -14,67 +14,49 @@ function fmt(val) {
 }
 
 function ActionSheet({ lead, onClose, handleRowAction, isAdmin }) {
-  function fire(action) {
-    // Close sheet first, then run action on next tick so React unmounts cleanly
-    onClose();
-    setTimeout(() => handleRowAction(action, lead), 0);
-  }
-
   const items = [
-    { action: 'add_task',        label: 'Add Task / Update Stage', icon: <Calendar className="w-5 h-5 text-indigo-500" /> },
-    { action: 'view',            label: 'View Details',            icon: <Eye      className="w-5 h-5 text-blue-500" /> },
-    { action: 'convert',         label: 'Convert to Contact',      icon: <CheckSquare className="w-5 h-5 text-emerald-500" /> },
-    ...(isAdmin ? [{ action: 'transfer', label: 'Transfer Lead',   icon: <ArrowRightLeft className="w-5 h-5 text-amber-500" /> }] : []),
-    { action: 'add_owner',       label: 'Add Owner',               icon: <UserPlus className="w-5 h-5 text-blue-500" /> },
-    { action: 'remove_owner',    label: 'Remove Lead Owner',       icon: <Users    className="w-5 h-5 text-rose-400" /> },
-    { action: 'add_cp',          label: 'Add Channel Partner',     icon: <Building2 className="w-5 h-5 text-indigo-500" /> },
-    { action: 'remove_cp',       label: 'Remove Channel Partner',  icon: <Building2 className="w-5 h-5 text-rose-400" /> },
-    { action: 'suggest_property',label: 'Suggested Property',      icon: <Building2 className="w-5 h-5 text-emerald-500" /> },
-    { action: 'edit',            label: 'Edit Lead',               icon: <Edit3    className="w-5 h-5 text-slate-500" /> },
-    ...(isAdmin ? [{ action: 'delete', label: 'Delete Lead',       icon: <Trash2   className="w-5 h-5 text-rose-500" />, danger: true }] : []),
+    { action: 'add_task',         label: 'Add Task / Update Stage', icon: <Calendar  className="w-4 h-4 text-indigo-500" /> },
+    { action: 'view',             label: 'View Details',            icon: <Eye       className="w-4 h-4 text-blue-500" /> },
+    { action: 'convert',          label: 'Convert to Contact',      icon: <CheckSquare className="w-4 h-4 text-emerald-500" /> },
+    ...(isAdmin ? [{ action: 'transfer', label: 'Transfer Lead',    icon: <ArrowRightLeft className="w-4 h-4 text-amber-500" /> }] : []),
+    { action: 'add_owner',        label: 'Add Owner',               icon: <UserPlus  className="w-4 h-4 text-blue-500" /> },
+    { action: 'remove_owner',     label: 'Remove Lead Owner',       icon: <Users     className="w-4 h-4 text-rose-400" /> },
+    { action: 'add_cp',           label: 'Add Channel Partner',     icon: <Building2 className="w-4 h-4 text-indigo-500" /> },
+    { action: 'remove_cp',        label: 'Remove Channel Partner',  icon: <Building2 className="w-4 h-4 text-rose-400" /> },
+    { action: 'suggest_property', label: 'Suggested Property',      icon: <Building2 className="w-4 h-4 text-emerald-500" /> },
+    { action: 'edit',             label: 'Edit Lead',               icon: <Edit3     className="w-4 h-4 text-slate-500" /> },
+    ...(isAdmin ? [{ action: 'delete', label: 'Delete Lead',        icon: <Trash2    className="w-4 h-4 text-rose-500" />, danger: true }] : []),
   ];
 
   return createPortal(
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9999 }}>
-      {/* Backdrop */}
+    // Backdrop — tap to close
+    <div
+      className="mobile-action-sheet"
+      style={{ position:'fixed', inset:0, zIndex:9999, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }}
+      onClick={onClose}
+    >
+      {/* Card — stop propagation */}
       <div
-        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }}
-        onClick={onClose}
-      />
-      {/* Sheet */}
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0,
-        background: '#fff', borderRadius: '20px 20px 0 0',
-        boxShadow: '0 -4px 32px rgba(0,0,0,0.18)',
-        maxHeight: '80vh', display: 'flex', flexDirection: 'column'
-      }}>
-        {/* Handle bar */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px 10px', borderBottom: '1px solid #f1f5f9' }}>
+        style={{ background:'#fff', borderRadius:16, width:'100%', maxWidth:340, maxHeight:'80vh', display:'flex', flexDirection:'column', boxShadow:'0 20px 60px rgba(0,0,0,0.25)' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px', borderBottom:'1px solid #f1f5f9', flexShrink:0 }}>
           <div>
-            <div style={{ fontWeight: 700, fontSize: 14, color: '#0f172a' }}>{lead.name}</div>
-            <div style={{ fontSize: 11, color: '#94a3b8', fontFamily: 'monospace' }}>{lead.leadId}</div>
+            <div style={{ fontWeight:700, fontSize:14, color:'#0f172a' }}>{lead.name}</div>
+            <div style={{ fontSize:11, color:'#94a3b8', fontFamily:'monospace' }}>{lead.leadId}</div>
           </div>
-          <button onClick={onClose} style={{ padding: 6, borderRadius: 8, background: '#f1f5f9', border: 'none', cursor: 'pointer' }}>
-            <X size={16} color="#64748b" />
-          </button>
+          <button onClick={onClose} style={{ padding:'4px 8px', borderRadius:6, background:'#f1f5f9', border:'none', fontSize:14, color:'#64748b', cursor:'pointer' }}>✕</button>
         </div>
         {/* Actions */}
-        <div style={{ overflowY: 'auto', flex: 1 }}>
+        <div style={{ overflowY:'auto', flex:1 }}>
           {items.map(({ action, label, icon, danger }) => (
             <button
               key={action}
-              onClick={() => fire(action)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 14,
-                width: '100%', padding: '14px 20px',
-                background: 'none', border: 'none',
-                borderBottom: '1px solid #f8fafc',
-                cursor: 'pointer', textAlign: 'left',
-                fontSize: 14, color: danger ? '#ef4444' : '#1e293b',
-                WebkitTapHighlightColor: 'transparent',
-              }}
+              onClick={() => { handleRowAction(action, lead); onClose(); }}
+              style={{ display:'flex', alignItems:'center', gap:12, width:'100%', padding:'12px 16px', background:'none', border:'none', borderBottom:'1px solid #f8fafc', cursor:'pointer', textAlign:'left', fontSize:13, fontWeight:500, color: danger ? '#ef4444' : '#1e293b', WebkitTapHighlightColor:'transparent' }}
             >
-              {icon} {label}
+              {icon}{label}
             </button>
           ))}
         </div>
@@ -88,8 +70,8 @@ export default function MobileLeadCards({
   leads, loading, openMenuLeadId, setOpenMenuLeadId,
   onViewDetails, handleRowAction, isAdmin
 }) {
-  if (loading) return <div style={{ padding: '48px 0', textAlign: 'center', color: '#94a3b8' }}>Loading leads…</div>;
-  if (!leads?.length) return <div style={{ padding: '48px 0', textAlign: 'center', color: '#94a3b8' }}>No leads found.</div>;
+  if (loading) return <div className="py-12 text-center text-slate-400 text-sm">Loading leads…</div>;
+  if (!leads?.length) return <div className="py-12 text-center text-slate-400 text-sm">No leads found.</div>;
 
   const activeLead = leads.find(r => r.id === openMenuLeadId) ?? null;
 
@@ -98,7 +80,7 @@ export default function MobileLeadCards({
       <div className="space-y-3 pb-4">
         {leads.map((r) => (
           <div key={r.id} className="bg-white rounded-xl border border-slate-200 shadow-sm">
-            {/* Tappable body */}
+            {/* Tap body → View Details */}
             <button className="w-full text-left px-4 pt-3 pb-2 block" onClick={() => onViewDetails(r)}>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="font-mono text-[10px] text-indigo-500 font-semibold">{r.leadId}</span>
