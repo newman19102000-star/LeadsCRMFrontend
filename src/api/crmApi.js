@@ -34,6 +34,12 @@ export const crmApi = {
   setUserHoliday: (id, payload) =>
     api.put(`/auth/users/${id}/holiday`, payload).then(r => r.data),
 
+  // Projects CRUD
+  getProjects: () => api.get('/projects').then(r => r.data),
+  createProject: (payload) => api.post('/projects', payload).then(r => r.data),
+  updateProject: (id, payload) => api.put(`/projects/${id}`, payload).then(r => r.data),
+  deleteProject: (id) => api.delete(`/projects/${id}`).then(r => r.data),
+
   // Leads Workspace APIs
   getDashboardCounts: () => api.get('/leads/dashboard-counts').then(r => r.data),
   getLookups: () => api.get('/leads/lookups').then(r => r.data),

@@ -7,7 +7,8 @@ import { requestNotificationPermission, showLeadNotification } from './utils/not
 import {
   Users, CheckSquare, Search, RefreshCw, MoreVertical,
   Calendar, Building2, UserPlus, ArrowRightLeft, Trash2, Edit3,
-  Eye, Bell, Wifi, Layers, Plus, Link2, ShieldCheck, LogOut, Lock, X
+  Eye, Bell, Wifi, Layers, Plus, Link2, ShieldCheck, LogOut, Lock, X,
+  Home, MapPin
 } from 'lucide-react';
 
 export default function App() {
@@ -28,7 +29,9 @@ export default function App() {
 
   const isAdmin = currentUser?.accessRole === 'CompanyAdmin' || currentUser?.accessRole === 'SuperAdmin';
 
-  const [activePage, setActivePage] = useState('leads'); // 'leads' | 'tasks' | 'campaigns' | 'team'
+  const [activePage, setActivePage] = useState('leads'); // 'leads' | 'tasks' | 'campaigns' | 'team' | 'projects'
+  const [projects, setProjects] = useState([]);
+  const [editingProject, setEditingProject] = useState(null); // null = closed, {} = new, {id,...} = edit
   const [counts, setCounts] = useState(null);
   const [lookups, setLookups] = useState({ teamMembers: [], projects: [], channelPartners: [], stages: [] });
 
@@ -164,6 +167,16 @@ export default function App() {
     }
   }, [currentUser, currentTeamPage]);
 
+  const loadProjects = useCallback(async () => {
+    if (!currentUser) return;
+    try {
+      const data = await crmApi.getProjects();
+      setProjects(data);
+    } catch (err) {
+      console.error('Failed loading projects:', err);
+    }
+  }, [currentUser]);
+
   // Real-Time SignalR Handler
   const handleRealtimeLead = useCallback((notification) => {
     if (!currentUser) return;
@@ -214,7 +227,8 @@ export default function App() {
     else if (activePage === 'tasks') loadTasks(activeTaskTab, currentTaskPage);
     else if (activePage === 'campaigns') loadCampaignsAndPages();
     else if (activePage === 'team') loadCompanyUsers(currentTeamPage);
-  }, [currentUser, activePage, activeLeadTab, activeTaskTab, currentLeadPage, currentTaskPage, currentTeamPage, loadLeads, loadTasks, loadCampaignsAndPages, loadCompanyUsers]);
+    else if (activePage === 'projects') loadProjects();
+  }, [currentUser, activePage, activeLeadTab, activeTaskTab, currentLeadPage, currentTaskPage, currentTeamPage, loadLeads, loadTasks, loadCampaignsAndPages, loadCompanyUsers, loadProjects]);
 
   // Reset to page 1 when changing tabs or search
   useEffect(() => {
@@ -231,6 +245,7 @@ export default function App() {
     else if (activePage === 'tasks') loadTasks(activeTaskTab, currentTaskPage);
     else if (activePage === 'campaigns') loadCampaignsAndPages();
     else if (activePage === 'team') loadCompanyUsers(currentTeamPage);
+    else if (activePage === 'projects') loadProjects();
   };
 
   // Login / Company Registration Submit Handlers
@@ -602,6 +617,14 @@ export default function App() {
                   }`}
                 >
                   <Lock className="w-4 h-4" /> Team & Access Control
+                </button>
+                <button
+                  onClick={() => setActivePage('projects')}
+                  className={`px-3.5 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition ${
+                    activePage === 'projects' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800'
+                  }`}
+                >
+                  <Home className="w-4 h-4" /> Projects
                 </button>
               </>
             )}
@@ -1686,6 +1709,183 @@ export default function App() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* PROJECTS PAGE */}
+        {activePage === 'projects' && (
+          <div className="px-3 sm:px-6 py-4 sm:py-6 max-w-5xl mx-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h1 className="text-xl font-bold text-slate-900">Projects</h1>
+                <p className="text-sm text-slate-500 mt-0.5">Manage the real-estate projects leads are tagged against.</p>
+              </div>
+              <button
+                onClick={() => setEditingProject({ name: '', subLocation: '', configSummary: '', priceRange: '' })}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold flex items-center gap-2"
+              >
+                <span className="text-lg leading-none">+</span> New Project
+              </button>
+            </div>
+
+            {/* Project Cards */}
+            {projects.length === 0 ? (
+              <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
+                <Home className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                <p className="text-slate-500 font-medium">No projects yet</p>
+                <p className="text-slate-400 text-sm mt-1">Click "New Project" to create your first one.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {projects.map(p => (
+                  <div key={p.id} className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition p-5 flex flex-col gap-3">
+                    {/* Name + badges */}
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-base">{p.name}</h3>
+                      {p.subLocation && (
+                        <p className="text-sm text-slate-500 mt-0.5 flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5" />{p.subLocation}
+                        </p>
+                      )}
+                    </div>
+                    {/* Details */}
+                    <div className="space-y-1 text-sm text-slate-600">
+                      {p.configSummary && (
+                        <p><span className="text-slate-400 text-xs">Config:</span> {p.configSummary}</p>
+                      )}
+                      {p.priceRange && (
+                        <p><span className="text-slate-400 text-xs">Price:</span> {p.priceRange}</p>
+                      )}
+                    </div>
+                    {/* Stats */}
+                    <div className="flex items-center gap-3 pt-2 border-t border-slate-100">
+                      <span className="text-xs text-slate-500">
+                        <span className="font-semibold text-slate-800">{p.leadCount}</span> leads
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        <span className="font-semibold text-slate-800">{p.campaignCount}</span> campaigns
+                      </span>
+                    </div>
+                    {/* Actions */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setEditingProject({ ...p })}
+                        className="flex-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium"
+                      >Edit</button>
+                      <button
+                        onClick={async () => {
+                          if (!window.confirm(`Delete "${p.name}"? This cannot be undone.`)) return;
+                          try {
+                            await crmApi.deleteProject(p.id);
+                            loadProjects();
+                          } catch (err) {
+                            alert(err.response?.data || 'Could not delete project.');
+                          }
+                        }}
+                        className="flex-1 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-medium"
+                      >Delete</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* PROJECT CREATE / EDIT MODAL */}
+        {editingProject !== null && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+              <div className="border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-slate-900">
+                  {editingProject.id ? 'Edit Project' : 'New Project'}
+                </h2>
+                <button onClick={() => setEditingProject(null)} className="text-slate-400 hover:text-slate-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Project Name <span className="text-rose-500">*</span></label>
+                  <input
+                    type="text"
+                    value={editingProject.name || ''}
+                    onChange={e => setEditingProject({ ...editingProject, name: e.target.value })}
+                    placeholder="e.g. Skyline Residency"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Location / Sub-location</label>
+                  <input
+                    type="text"
+                    value={editingProject.subLocation || ''}
+                    onChange={e => setEditingProject({ ...editingProject, subLocation: e.target.value })}
+                    placeholder="e.g. Andheri West, Mumbai"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Configuration Summary</label>
+                  <input
+                    type="text"
+                    value={editingProject.configSummary || ''}
+                    onChange={e => setEditingProject({ ...editingProject, configSummary: e.target.value })}
+                    placeholder="e.g. 2 & 3 BHK"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Price Range</label>
+                  <input
+                    type="text"
+                    value={editingProject.priceRange || ''}
+                    onChange={e => setEditingProject({ ...editingProject, priceRange: e.target.value })}
+                    placeholder="e.g. 1.8 Cr – 2.9 Cr"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div className="flex gap-3 pt-2 border-t border-slate-100">
+                  <button
+                    onClick={async () => {
+                      if (!editingProject.name?.trim()) { alert('Project name is required.'); return; }
+                      try {
+                        if (editingProject.id) {
+                          await crmApi.updateProject(editingProject.id, {
+                            name: editingProject.name,
+                            subLocation: editingProject.subLocation,
+                            configSummary: editingProject.configSummary,
+                            priceRange: editingProject.priceRange
+                          });
+                        } else {
+                          await crmApi.createProject({
+                            name: editingProject.name,
+                            subLocation: editingProject.subLocation,
+                            configSummary: editingProject.configSummary,
+                            priceRange: editingProject.priceRange
+                          });
+                        }
+                        setEditingProject(null);
+                        loadProjects();
+                        // Refresh lookups so campaign mapping dropdowns pick up new project
+                        const updatedLookups = await crmApi.getLookups();
+                        setLookups(updatedLookups);
+                      } catch (err) {
+                        alert(err.response?.data || 'Failed to save project.');
+                      }
+                    }}
+                    className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-sm"
+                  >
+                    {editingProject.id ? 'Save Changes' : 'Create Project'}
+                  </button>
+                  <button
+                    onClick={() => setEditingProject(null)}
+                    className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg font-semibold text-sm"
+                  >Cancel</button>
+                </div>
+              </div>
             </div>
           </div>
         )}
