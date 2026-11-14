@@ -1473,135 +1473,160 @@ export default function App() {
                 </p>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-[10px] sm:text-xs whitespace-nowrap">
-                <thead>
-                  <tr className="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200 uppercase">
-                    <th className="py-3 px-3">ID</th>
-                    <th className="py-3 px-3">Name</th>
-                    <th className="py-3 px-3">Login Email</th>
-                    <th className="py-3 px-3">Department</th>
-                    <th className="py-3 px-3">Access Role</th>
-                    <th className="py-3 px-3">Lead & Task Visibility Scope</th>
-                    <th className="py-3 px-3">Status</th>
-                    <th className="py-3 px-3 text-center">Quick Toggle</th>
-                    <th className="py-3 px-3 text-center">Actions</th>
-                    <th className="py-3 px-3 text-center">Quick Toggle</th>
-                    <th className="py-3 px-3 text-center">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {(companyUsers.data || []).map((u) => {
-                    const now = new Date();
-                    const isAbsent = u.absentUntil && new Date(u.absentUntil) > now;
-                    const isOnHoliday = u.holidayStart && u.holidayEnd &&
-                      now >= new Date(u.holidayStart) && now < new Date(u.holidayEnd);
-                    const isUnavailable = isAbsent || isOnHoliday;
-                    return (
-                      <tr key={u.id} className={`hover:bg-slate-50 ${!u.isActive ? 'opacity-50' : ''}`}>
-                        <td className="py-2.5 px-3 font-mono">{u.id}</td>
-                        <td className="py-2.5 px-3 font-semibold text-slate-900">{u.name}</td>
-                        <td className="py-2.5 px-3 font-mono text-slate-600">{u.email}</td>
-                        <td className="py-2.5 px-3">{u.role}</td>
-                        <td className="py-2.5 px-3">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            u.accessRole === 'CompanyAdmin'
-                              ? 'bg-indigo-100 text-indigo-800'
-                              : 'bg-slate-100 text-slate-700'
-                          }`}>
-                            {u.accessRole}
-                          </span>
-                        </td>
-                        <td className="py-2.5 px-3">
-                          {u.accessRole === 'CompanyAdmin' || u.canViewAllCompanyLeads ? (
-                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-medium">All Company Leads & Tasks</span>
-                          ) : (
-                            <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-medium">Assigned Only</span>
-                          )}
-                        </td>
-                        <td className="py-2.5 px-3">
-                          {!u.isActive ? (
-                            <span className="px-2 py-0.5 bg-rose-100 text-rose-700 rounded text-[10px] font-medium">Inactive</span>
-                          ) : isOnHoliday ? (
-                            <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded text-[10px] font-medium">
-                              On Holiday until {new Date(u.holidayEnd).toLocaleDateString()}
+                <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
+                  <thead>
+                    <tr className="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200 uppercase text-[11px]">
+                      <th className="py-3 px-4">Member</th>
+                      <th className="py-3 px-4">Role</th>
+                      <th className="py-3 px-4">Lead Visibility</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4 text-center">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {(companyUsers.data || []).map((u) => {
+                      const now = new Date();
+                      const isAbsent = u.absentUntil && new Date(u.absentUntil) > now;
+                      const isOnHoliday = u.holidayStart && u.holidayEnd &&
+                        now >= new Date(u.holidayStart) && now < new Date(u.holidayEnd);
+                      return (
+                        <tr key={u.id} className={`hover:bg-slate-50 transition ${!u.isActive ? 'opacity-40' : ''}`}>
+                          {/* Member */}
+                          <td className="py-3 px-4">
+                            <div className="font-semibold text-slate-900">{u.name}</div>
+                            <div className="text-slate-500 text-[11px]">{u.email}</div>
+                            {u.phone && <div className="text-slate-400 text-[11px]">{u.phone}</div>}
+                          </td>
+                          {/* Role */}
+                          <td className="py-3 px-4">
+                            <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              u.accessRole === 'CompanyAdmin' ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-100 text-slate-700'
+                            }`}>{u.accessRole}</span>
+                            <div className="text-slate-500 text-[11px] mt-0.5">{u.role}</div>
+                          </td>
+                          {/* Visibility */}
+                          <td className="py-3 px-4">
+                            <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium ${
+                              u.canViewAllCompanyLeads || u.accessRole === 'CompanyAdmin'
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-amber-100 text-amber-700'
+                            }`}>
+                              {u.canViewAllCompanyLeads || u.accessRole === 'CompanyAdmin' ? 'All Leads' : 'Assigned Only'}
                             </span>
-                          ) : isAbsent ? (
-                            <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px] font-medium">Absent Today</span>
-                          ) : (
-                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[10px] font-medium">Available</span>
-                          )}
-                        </td>
-                        <td className="py-2.5 px-3 text-center">
-                          {u.accessRole !== 'CompanyAdmin' && (
-                            <button
-                              onClick={async () => {
-                                await crmApi.updateUserPermissions(u.id, {
-                                  accessRole: u.accessRole,
-                                  canViewAllCompanyLeads: !u.canViewAllCompanyLeads,
-                                  isActive: u.isActive
-                                });
-                                loadCompanyUsers(currentTeamPage);
-                              }}
-                              className="px-2.5 py-1 bg-slate-900 hover:bg-indigo-600 text-white rounded text-[11px] font-medium"
-                            >
-                              Switch to {u.canViewAllCompanyLeads ? 'Assigned Only' : 'All Leads'}
-                            </button>
-                          )}
-                        </td>
-                        <td className="py-2.5 px-3 text-center">
-                          <div className="flex items-center justify-center gap-1 flex-wrap">
-                            {/* Edit */}
-                            <button
-                              onClick={() => setEditingUser({ ...u, password: '' })}
-                              className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-medium"
-                            >Edit</button>
-                            {/* Absent today */}
-                            {u.accessRole !== 'CompanyAdmin' && u.isActive && (
-                              isAbsent ? (
-                                <button
-                                  onClick={async () => { await crmApi.markUserAbsent(u.id, true); loadCompanyUsers(currentTeamPage); }}
-                                  className="px-2 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded text-[11px] font-medium"
-                                >Clear Absent</button>
-                              ) : (
-                                <button
-                                  onClick={async () => { await crmApi.markUserAbsent(u.id, false); loadCompanyUsers(currentTeamPage); }}
-                                  className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded text-[11px] font-medium"
-                                >Mark Absent</button>
-                              )
+                          </td>
+                          {/* Status */}
+                          <td className="py-3 px-4">
+                            {!u.isActive ? (
+                              <span className="inline-block px-2 py-0.5 bg-rose-100 text-rose-700 rounded text-[10px] font-medium">Deleted</span>
+                            ) : isOnHoliday ? (
+                              <span className="inline-block px-2 py-0.5 bg-orange-100 text-orange-700 rounded text-[10px] font-medium">
+                                Holiday → {new Date(u.holidayEnd).toLocaleDateString('en-IN', { day:'numeric', month:'short' })}
+                              </span>
+                            ) : isAbsent ? (
+                              <span className="inline-block px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px] font-medium">Absent Today</span>
+                            ) : (
+                              <span className="inline-block px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[10px] font-medium">Available</span>
                             )}
-                            {/* Holiday */}
-                            {u.accessRole !== 'CompanyAdmin' && u.isActive && (
-                              isOnHoliday ? (
-                                <button
-                                  onClick={async () => { await crmApi.setUserHoliday(u.id, { clear: true }); loadCompanyUsers(currentTeamPage); }}
-                                  className="px-2 py-1 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded text-[11px] font-medium"
-                                >Clear Holiday</button>
-                              ) : (
-                                <button
-                                  onClick={() => { setHolidayUser(u); setHolidayForm({ start: '', end: '' }); }}
-                                  className="px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-[11px] font-medium"
-                                >Set Holiday</button>
-                              )
-                            )}
-                            {/* Delete */}
-                            {u.accessRole !== 'CompanyAdmin' && (
+                          </td>
+                          {/* Actions dropdown */}
+                          <td className="py-3 px-4 text-center">
+                            <div className="relative inline-block action-menu-container">
                               <button
-                                onClick={async () => {
-                                  if (window.confirm(`Delete ${u.name}? They will be deactivated and no longer receive leads.`)) {
-                                    await crmApi.deleteUser(u.id);
-                                    loadCompanyUsers(currentTeamPage);
-                                  }
-                                }}
-                                className="px-2 py-1 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded text-[11px] font-medium"
-                              >Delete</button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                                onClick={() => setOpenMenuLeadId(openMenuLeadId === `team-${u.id}` ? null : `team-${u.id}`)}
+                                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded text-[11px] font-medium flex items-center gap-1.5"
+                              >
+                                Actions <span className="text-slate-400">▾</span>
+                              </button>
+                              {openMenuLeadId === `team-${u.id}` && (
+                                <div className="absolute right-0 top-8 w-48 bg-white border border-slate-200 rounded-lg shadow-2xl py-1 z-[100] text-left">
+                                  {/* Edit */}
+                                  <button
+                                    onClick={() => { setEditingUser({ ...u, password: '' }); setOpenMenuLeadId(null); }}
+                                    className="w-full px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs text-slate-700"
+                                  >
+                                    <Edit3 className="w-3.5 h-3.5 text-slate-500" /> Edit Details
+                                  </button>
+                                  {/* Toggle visibility */}
+                                  {u.accessRole !== 'CompanyAdmin' && (
+                                    <button
+                                      onClick={async () => {
+                                        await crmApi.updateUserPermissions(u.id, {
+                                          accessRole: u.accessRole,
+                                          canViewAllCompanyLeads: !u.canViewAllCompanyLeads,
+                                          isActive: u.isActive
+                                        });
+                                        setOpenMenuLeadId(null);
+                                        loadCompanyUsers(currentTeamPage);
+                                      }}
+                                      className="w-full px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs text-slate-700"
+                                    >
+                                      <ArrowRightLeft className="w-3.5 h-3.5 text-indigo-500" />
+                                      {u.canViewAllCompanyLeads ? 'Switch to Assigned Only' : 'Switch to All Leads'}
+                                    </button>
+                                  )}
+                                  {/* Absent */}
+                                  {u.accessRole !== 'CompanyAdmin' && u.isActive && (
+                                    isAbsent ? (
+                                      <button
+                                        onClick={async () => { await crmApi.markUserAbsent(u.id, true); setOpenMenuLeadId(null); loadCompanyUsers(currentTeamPage); }}
+                                        className="w-full px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs text-emerald-700"
+                                      >
+                                        <CheckSquare className="w-3.5 h-3.5" /> Clear Absent
+                                      </button>
+                                    ) : (
+                                      <button
+                                        onClick={async () => { await crmApi.markUserAbsent(u.id, false); setOpenMenuLeadId(null); loadCompanyUsers(currentTeamPage); }}
+                                        className="w-full px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs text-amber-700"
+                                      >
+                                        <Calendar className="w-3.5 h-3.5" /> Mark Absent Today
+                                      </button>
+                                    )
+                                  )}
+                                  {/* Holiday */}
+                                  {u.accessRole !== 'CompanyAdmin' && u.isActive && (
+                                    isOnHoliday ? (
+                                      <button
+                                        onClick={async () => { await crmApi.setUserHoliday(u.id, { clear: true }); setOpenMenuLeadId(null); loadCompanyUsers(currentTeamPage); }}
+                                        className="w-full px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs text-orange-700"
+                                      >
+                                        <X className="w-3.5 h-3.5" /> Clear Holiday
+                                      </button>
+                                    ) : (
+                                      <button
+                                        onClick={() => { setHolidayUser(u); setHolidayForm({ start: '', end: '' }); setOpenMenuLeadId(null); }}
+                                        className="w-full px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs text-blue-700"
+                                      >
+                                        <Calendar className="w-3.5 h-3.5" /> Set Holiday
+                                      </button>
+                                    )
+                                  )}
+                                  {/* Delete */}
+                                  {u.accessRole !== 'CompanyAdmin' && (
+                                    <>
+                                      <hr className="my-1 border-slate-100" />
+                                      <button
+                                        onClick={async () => {
+                                          if (window.confirm(`Deactivate ${u.name}? They will no longer receive leads.`)) {
+                                            await crmApi.deleteUser(u.id);
+                                            setOpenMenuLeadId(null);
+                                            loadCompanyUsers(currentTeamPage);
+                                          }
+                                        }}
+                                        className="w-full px-3 py-2 hover:bg-rose-50 flex items-center gap-2 text-xs text-rose-600"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" /> Deactivate User
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
 
               {/* Team Pagination */}
