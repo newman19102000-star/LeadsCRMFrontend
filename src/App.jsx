@@ -677,6 +677,14 @@ export default function App() {
               >
                 <Lock className="w-3.5 h-3.5" /> Team
               </button>
+              <button
+                onClick={() => setActivePage('projects')}
+                className={`px-2.5 py-1.5 rounded-md text-[10px] font-medium flex items-center gap-1 transition whitespace-nowrap ${
+                  activePage === 'projects' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
+                }`}
+              >
+                <Home className="w-3.5 h-3.5" /> Projects
+              </button>
             </>
           )}
         </nav>
@@ -1184,7 +1192,7 @@ export default function App() {
               </div>
             )}
           </div>
-        ) : activePage === 'campaigns' ? (
+        ) : activePage === 'campaigns' && isAdmin ? (
           /* CAMPAIGNS & CONNECTED FACEBOOK PAGES WORKSPACE */
           <div className="px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-5">
             <div className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4 shadow-xs space-y-3 sm:space-y-4">
@@ -1411,7 +1419,7 @@ export default function App() {
               </table>
             </div>
           </div>
-        ) : activePage === 'team' ? (
+        ) : activePage === 'team' && isAdmin ? (
           /* TEAM & ACCESS CONTROL WORKSPACE (ADMIN ONLY) */
           <div className="px-3 sm:px-6 py-4 sm:py-6 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
             <div className="bg-white rounded-lg border border-slate-200 p-4 sm:p-5 shadow-xs">
@@ -1754,7 +1762,7 @@ export default function App() {
         ) : null}
 
         {/* PROJECTS PAGE */}
-        {activePage === 'projects' && (
+        {activePage === 'projects' && isAdmin && (
           <div className="px-3 sm:px-6 py-4 sm:py-6 max-w-5xl mx-auto">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
