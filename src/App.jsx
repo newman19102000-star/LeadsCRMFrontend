@@ -2007,17 +2007,22 @@ export default function App() {
 
       {/* MODAL FOR ROW ACTIONS */}
       {activeModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
-          <div className="bg-white rounded-xl max-w-lg w-full p-4 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b pb-2 sm:pb-3 mb-3 sm:mb-4">
-              <h3 className="font-bold text-sm sm:text-base uppercase tracking-wide text-slate-800 truncate pr-2">
-                {activeModal.type.replaceAll('_', ' ')} — {activeModal.lead.name}
-              </h3>
-              <button onClick={() => setActiveModal(null)} className="text-slate-400 hover:text-slate-600 font-bold text-xl shrink-0">✕</button>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-sm shadow-2xl max-h-[85vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 flex-shrink-0">
+              <div>
+                <h3 className="font-bold text-sm uppercase tracking-wide text-slate-800 leading-tight">
+                  {activeModal.type.replaceAll('_', ' ')}
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5 truncate">{activeModal.lead.name}</p>
+              </div>
+              <button onClick={() => setActiveModal(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 flex-shrink-0">✕</button>
             </div>
 
             {activeModal.type !== 'view' && (
-              <form onSubmit={submitModal} className="space-y-2.5 sm:space-y-3 text-xs sm:text-sm">
+              <form onSubmit={submitModal} className="flex flex-col flex-1 min-h-0">
+                <div className="overflow-y-auto flex-1 px-4 py-3 space-y-3 text-sm">
                 {activeModal.type === 'add_task' && (
                   <>
                     <div>
@@ -2235,12 +2240,13 @@ export default function App() {
                   </div>
                 )}
 
-                <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-3 border-t">
-                  <button type="button" onClick={() => setActiveModal(null)} className="px-4 py-2 border rounded text-slate-600 text-sm">
+                </div>{/* end scrollable body */}
+                <div className="flex gap-2 px-4 py-3 border-t border-slate-200 flex-shrink-0">
+                  <button type="button" onClick={() => setActiveModal(null)} className="flex-1 px-4 py-2.5 border border-slate-300 rounded-lg text-slate-700 text-sm font-medium">
                     Cancel
                   </button>
-                  <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded font-medium hover:bg-indigo-700 text-sm">
-                    Save Changes
+                  <button type="submit" className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-semibold text-sm active:bg-indigo-800">
+                    Save
                   </button>
                 </div>
               </form>
