@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, User, FileText, Clock, CheckSquare, Home, Phone, Mail, MapPin, Calendar, Tag } from 'lucide-react';
 import { crmApi } from '../api/crmApi';
 
-const LeadDetailsModal = ({ leadId, isOpen, onClose }) => {
+const LeadDetailsModal = ({ leadId, isOpen, onClose, onNavigateToTask }) => {
   const [lead, setLead] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -72,15 +72,15 @@ const LeadDetailsModal = ({ leadId, isOpen, onClose }) => {
             <User className="w-6 h-6 text-blue-600" />
             <div>
               <h2 className="text-2xl font-bold text-gray-800">
-                {lead?.fullName || 'Lead Details'}
+                {lead?.name || 'Lead Details'}
               </h2>
               {lead && (
                 <div className="flex items-center gap-2 mt-1">
-                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStageColor(lead.stage)}`}>
-                    {lead.stage?.replace('_', ' ').toUpperCase()}
+                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStageColor(lead.leadStage)}`}>
+                    {lead.leadStage?.toUpperCase() || 'NEW'}
                   </span>
                   <span className="text-sm text-gray-500">•</span>
-                  <span className="text-sm text-gray-500">ID: {lead.leadIdNo}</span>
+                  <span className="text-sm text-gray-500">ID: LD-{String(lead.leadNumber).padStart(5, '0')}</span>
                 </div>
               )}
             </div>
@@ -139,12 +139,12 @@ const LeadDetailsModal = ({ leadId, isOpen, onClose }) => {
                     <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                       <h3 className="font-semibold text-gray-800 mb-3">Contact Information</h3>
                       
-                      {lead.phone && (
+                      {lead.primaryNo && (
                         <div className="flex items-start gap-3">
                           <Phone className="w-5 h-5 text-gray-400 mt-0.5" />
                           <div>
                             <p className="text-sm text-gray-500">Phone</p>
-                            <p className="text-gray-800 font-medium">{lead.phone}</p>
+                            <p className="text-gray-800 font-medium">{lead.primaryNo}</p>
                           </div>
                         </div>
                       )}
@@ -159,12 +159,12 @@ const LeadDetailsModal = ({ leadId, isOpen, onClose }) => {
                         </div>
                       )}
 
-                      {lead.city && (
+                      {lead.subLocation && (
                         <div className="flex items-start gap-3">
                           <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
                           <div>
                             <p className="text-sm text-gray-500">Location</p>
-                            <p className="text-gray-800 font-medium">{lead.city}</p>
+                            <p className="text-gray-800 font-medium">{lead.subLocation}</p>
                           </div>
                         </div>
                       )}
@@ -222,12 +222,12 @@ const LeadDetailsModal = ({ leadId, isOpen, onClose }) => {
                         </div>
                       )}
 
-                      {lead.leadSource && (
+                      {lead.source && (
                         <div className="flex items-start gap-3">
                           <Tag className="w-5 h-5 text-gray-400 mt-0.5" />
                           <div>
                             <p className="text-sm text-gray-500">Source</p>
-                            <p className="text-gray-800 font-medium">{lead.leadSource}</p>
+                            <p className="text-gray-800 font-medium">{lead.source}</p>
                           </div>
                         </div>
                       )}
@@ -254,7 +254,7 @@ const LeadDetailsModal = ({ leadId, isOpen, onClose }) => {
                       {lead.channelPartner && (
                         <div>
                           <p className="text-sm text-gray-500">Channel Partner</p>
-                          <p className="text-gray-800 font-medium">{lead.channelPartner.name}</p>
+                          <p className="text-gray-800 font-medium">{lead.channelPartner.firmName}</p>
                         </div>
                       )}
 
@@ -272,19 +272,19 @@ const LeadDetailsModal = ({ leadId, isOpen, onClose }) => {
                         <h3 className="font-semibold text-gray-800 mb-3">Project</h3>
                         <div>
                           <p className="text-gray-800 font-medium">{lead.project.name}</p>
-                          {lead.project.location && (
-                            <p className="text-sm text-gray-500 mt-1">{lead.project.location}</p>
+                          {lead.project.subLocation && (
+                            <p className="text-sm text-gray-500 mt-1">{lead.project.subLocation}</p>
                           )}
                         </div>
                       </div>
                     )}
                   </div>
 
-                  {/* Comments */}
-                  {lead.comments && (
+                  {/* Remark */}
+                  {lead.remark && (
                     <div className="bg-gray-50 rounded-lg p-4">
-                      <h3 className="font-semibold text-gray-800 mb-2">Comments</h3>
-                      <p className="text-gray-700 whitespace-pre-wrap">{lead.comments}</p>
+                      <h3 className="font-semibold text-gray-800 mb-2">Remark</h3>
+                      <p className="text-gray-700 whitespace-pre-wrap">{lead.remark}</p>
                     </div>
                   )}
                 </div>
@@ -353,11 +353,27 @@ const LeadDetailsModal = ({ leadId, isOpen, onClose }) => {
                             </div>
                             <div className="flex-1 bg-gray-50 rounded-lg p-4 mb-4">
                               <div className="flex items-start justify-between mb-2">
-                                <p className="font-semibold text-gray-800">{style.label}</p>
+                                <div className="flex items-center gap-2">
+                                  <p className="font-semibold text-gray-800">{style.label}</p>
+                                  {activity.taskId && (
+                                    <span className="font-mono text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded">
+                                      TASK-{activity.taskId.substring(0, 8).toUpperCase()}
+                                    </span>
+                                  )}
+                                </div>
                                 <span className="text-sm text-gray-500">{formatDate(activity.createdAt)}</span>
                               </div>
                               {activity.notes && (
                                 <p className="text-gray-600 text-sm whitespace-pre-wrap">{activity.notes}</p>
+                              )}
+                              {activity.taskId && onNavigateToTask && (
+                                <button
+                                  onClick={() => onNavigateToTask(activity.taskId)}
+                                  className="mt-2 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[11px] font-medium flex items-center gap-1"
+                                >
+                                  <Eye className="w-3 h-3" />
+                                  Open Task
+                                </button>
                               )}
                             </div>
                           </div>
@@ -379,43 +395,50 @@ const LeadDetailsModal = ({ leadId, isOpen, onClose }) => {
                   <h3 className="font-semibold text-gray-800 text-lg mb-4">Tasks</h3>
                   {lead.tasks && lead.tasks.length > 0 ? (
                     <div className="space-y-3">
-                      {lead.tasks.map((task) => (
-                        <div key={task.id} className="bg-gray-50 rounded-lg p-4 border-l-4 border-blue-500">
-                          <div className="flex items-start justify-between mb-2">
-                            <div className="flex items-center gap-3">
-                              <input
-                                type="checkbox"
-                                checked={task.isCompleted}
-                                readOnly
-                                className="w-5 h-5 text-blue-600"
-                              />
-                              <p className={`font-semibold ${task.isCompleted ? 'line-through text-gray-500' : 'text-gray-800'}`}>
-                                {task.title}
-                              </p>
+                      {lead.tasks.map((task) => {
+                        const isCompleted = task.status === 'Completed';
+                        const shortId = task.id?.toString().substring(0, 8).toUpperCase();
+                        return (
+                          <div key={task.id} className={`bg-gray-50 rounded-lg p-4 border-l-4 ${isCompleted ? 'border-emerald-500' : 'border-blue-500'}`}>
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex items-center gap-3">
+                                <span className="font-mono text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded">
+                                  TASK-{shortId}
+                                </span>
+                                <p className={`font-semibold ${isCompleted ? 'line-through text-gray-500' : 'text-gray-800'}`}>
+                                  {task.title}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                                  isCompleted ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                                }`}>
+                                  {task.status}
+                                </span>
+                                {onNavigateToTask && (
+                                  <button
+                                    onClick={() => onNavigateToTask(task.id)}
+                                    className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[11px] font-medium flex items-center gap-1"
+                                  >
+                                    <Eye className="w-3 h-3" />
+                                    Open Task
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                            {task.priority && (
-                              <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                                task.priority === 'high' ? 'bg-red-100 text-red-700' :
-                                task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                                'bg-gray-100 text-gray-700'
-                              }`}>
-                                {task.priority}
-                              </span>
+                            {task.remark && (
+                              <p className="text-gray-600 text-sm mb-2">{task.remark}</p>
                             )}
+                            <div className="flex items-center gap-4 text-sm text-gray-500">
+                              {task.scheduleDate && (
+                                <span>📅 {formatDate(task.scheduleDate)}</span>
+                              )}
+                              <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-semibold">{task.activityType}</span>
+                              <span className="font-semibold text-amber-700 text-[10px]">{task.stage}</span>
+                            </div>
                           </div>
-                          {task.description && (
-                            <p className="text-gray-600 text-sm mb-2 ml-8">{task.description}</p>
-                          )}
-                          <div className="flex items-center gap-4 ml-8 text-sm text-gray-500">
-                            {task.scheduleDate && (
-                              <span>📅 {formatDate(task.scheduleDate)}</span>
-                            )}
-                            {task.assignedTo && (
-                              <span>👤 {task.assignedTo.name}</span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="bg-gray-50 rounded-lg p-8 text-center">

@@ -2091,6 +2091,17 @@ export default function App() {
           setViewLeadModalOpen(false);
           setSelectedLeadId(null);
         }}
+        onNavigateToTask={async (taskId) => {
+          try {
+            const taskDetails = await crmApi.getTask(taskId);
+            setViewLeadModalOpen(false);
+            setSelectedTaskDetails(taskDetails);
+            setViewTaskModalOpen(true);
+          } catch (err) {
+            console.error('Failed to fetch task details:', err);
+            alert('Could not load task details.');
+          }
+        }}
       />
 
       {/* View Lead Tasks Modal */}
