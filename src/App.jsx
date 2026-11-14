@@ -69,6 +69,9 @@ export default function App() {
   // Team & RBAC Management State
   const [companyUsers, setCompanyUsers] = useState({ totalCount: 0, page: 1, pageSize: 50, data: [] });
   const [currentTeamPage, setCurrentTeamPage] = useState(1);
+  const [editingUser, setEditingUser] = useState(null); // user being edited
+  const [holidayUser, setHolidayUser] = useState(null); // user for holiday modal
+  const [holidayForm, setHolidayForm] = useState({ start: '', end: '' });
   const [newUserForm, setNewUserForm] = useState({
     name: '',
     email: '',
@@ -1479,55 +1482,124 @@ export default function App() {
                     <th className="py-3 px-3">Department</th>
                     <th className="py-3 px-3">Access Role</th>
                     <th className="py-3 px-3">Lead & Task Visibility Scope</th>
+                    <th className="py-3 px-3">Status</th>
                     <th className="py-3 px-3 text-center">Quick Toggle</th>
+                    <th className="py-3 px-3 text-center">Actions</th>
+                    <th className="py-3 px-3 text-center">Quick Toggle</th>
+                    <th className="py-3 px-3 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {(companyUsers.data || []).map((u) => (
-                    <tr key={u.id} className="hover:bg-slate-50">
-                      <td className="py-2.5 px-3 font-mono">{u.id}</td>
-                      <td className="py-2.5 px-3 font-semibold text-slate-900">{u.name}</td>
-                      <td className="py-2.5 px-3 font-mono text-slate-600">{u.email}</td>
-                      <td className="py-2.5 px-3">{u.role}</td>
-                      <td className="py-2.5 px-3">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          u.accessRole === 'CompanyAdmin'
-                            ? 'bg-indigo-100 text-indigo-800'
-                            : 'bg-slate-100 text-slate-700'
-                        }`}>
-                          {u.accessRole}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-3">
-                        {u.accessRole === 'CompanyAdmin' || u.canViewAllCompanyLeads ? (
-                          <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-medium">
-                            All Company Leads & Tasks
+                  {(companyUsers.data || []).map((u) => {
+                    const now = new Date();
+                    const isAbsent = u.absentUntil && new Date(u.absentUntil) > now;
+                    const isOnHoliday = u.holidayStart && u.holidayEnd &&
+                      now >= new Date(u.holidayStart) && now < new Date(u.holidayEnd);
+                    const isUnavailable = isAbsent || isOnHoliday;
+                    return (
+                      <tr key={u.id} className={`hover:bg-slate-50 ${!u.isActive ? 'opacity-50' : ''}`}>
+                        <td className="py-2.5 px-3 font-mono">{u.id}</td>
+                        <td className="py-2.5 px-3 font-semibold text-slate-900">{u.name}</td>
+                        <td className="py-2.5 px-3 font-mono text-slate-600">{u.email}</td>
+                        <td className="py-2.5 px-3">{u.role}</td>
+                        <td className="py-2.5 px-3">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            u.accessRole === 'CompanyAdmin'
+                              ? 'bg-indigo-100 text-indigo-800'
+                              : 'bg-slate-100 text-slate-700'
+                          }`}>
+                            {u.accessRole}
                           </span>
-                        ) : (
-                          <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-medium">
-                            Assigned Leads & Tasks Only
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-2.5 px-3 text-center">
-                        {u.accessRole !== 'CompanyAdmin' && (
-                          <button
-                            onClick={async () => {
-                              await crmApi.updateUserPermissions(u.id, {
-                                accessRole: u.accessRole,
-                                canViewAllCompanyLeads: !u.canViewAllCompanyLeads,
-                                isActive: u.isActive
-                              });
-                              loadCompanyUsers(currentTeamPage);
-                            }}
-                            className="px-2.5 py-1 bg-slate-900 hover:bg-indigo-600 text-white rounded text-[11px] font-medium"
-                          >
-                            Switch to {u.canViewAllCompanyLeads ? 'Assigned Only' : 'All Leads'}
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="py-2.5 px-3">
+                          {u.accessRole === 'CompanyAdmin' || u.canViewAllCompanyLeads ? (
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-medium">All Company Leads & Tasks</span>
+                          ) : (
+                            <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-medium">Assigned Only</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3">
+                          {!u.isActive ? (
+                            <span className="px-2 py-0.5 bg-rose-100 text-rose-700 rounded text-[10px] font-medium">Inactive</span>
+                          ) : isOnHoliday ? (
+                            <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded text-[10px] font-medium">
+                              On Holiday until {new Date(u.holidayEnd).toLocaleDateString()}
+                            </span>
+                          ) : isAbsent ? (
+                            <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px] font-medium">Absent Today</span>
+                          ) : (
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[10px] font-medium">Available</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 text-center">
+                          {u.accessRole !== 'CompanyAdmin' && (
+                            <button
+                              onClick={async () => {
+                                await crmApi.updateUserPermissions(u.id, {
+                                  accessRole: u.accessRole,
+                                  canViewAllCompanyLeads: !u.canViewAllCompanyLeads,
+                                  isActive: u.isActive
+                                });
+                                loadCompanyUsers(currentTeamPage);
+                              }}
+                              className="px-2.5 py-1 bg-slate-900 hover:bg-indigo-600 text-white rounded text-[11px] font-medium"
+                            >
+                              Switch to {u.canViewAllCompanyLeads ? 'Assigned Only' : 'All Leads'}
+                            </button>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 text-center">
+                          <div className="flex items-center justify-center gap-1 flex-wrap">
+                            {/* Edit */}
+                            <button
+                              onClick={() => setEditingUser({ ...u, password: '' })}
+                              className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-medium"
+                            >Edit</button>
+                            {/* Absent today */}
+                            {u.accessRole !== 'CompanyAdmin' && u.isActive && (
+                              isAbsent ? (
+                                <button
+                                  onClick={async () => { await crmApi.markUserAbsent(u.id, true); loadCompanyUsers(currentTeamPage); }}
+                                  className="px-2 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded text-[11px] font-medium"
+                                >Clear Absent</button>
+                              ) : (
+                                <button
+                                  onClick={async () => { await crmApi.markUserAbsent(u.id, false); loadCompanyUsers(currentTeamPage); }}
+                                  className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded text-[11px] font-medium"
+                                >Mark Absent</button>
+                              )
+                            )}
+                            {/* Holiday */}
+                            {u.accessRole !== 'CompanyAdmin' && u.isActive && (
+                              isOnHoliday ? (
+                                <button
+                                  onClick={async () => { await crmApi.setUserHoliday(u.id, { clear: true }); loadCompanyUsers(currentTeamPage); }}
+                                  className="px-2 py-1 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded text-[11px] font-medium"
+                                >Clear Holiday</button>
+                              ) : (
+                                <button
+                                  onClick={() => { setHolidayUser(u); setHolidayForm({ start: '', end: '' }); }}
+                                  className="px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-[11px] font-medium"
+                                >Set Holiday</button>
+                              )
+                            )}
+                            {/* Delete */}
+                            {u.accessRole !== 'CompanyAdmin' && (
+                              <button
+                                onClick={async () => {
+                                  if (window.confirm(`Delete ${u.name}? They will be deactivated and no longer receive leads.`)) {
+                                    await crmApi.deleteUser(u.id);
+                                    loadCompanyUsers(currentTeamPage);
+                                  }
+                                }}
+                                className="px-2 py-1 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded text-[11px] font-medium"
+                              >Delete</button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
               </div>
@@ -2424,6 +2496,144 @@ export default function App() {
                 >
                   Close
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full">
+            <div className="border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-slate-900">Edit User — {editingUser.name}</h2>
+              <button onClick={() => setEditingUser(null)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
+                  <input type="text" value={editingUser.name} onChange={e => setEditingUser({...editingUser, name: e.target.value})}
+                    className="w-full border border-slate-300 rounded px-2.5 py-1.5 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
+                  <input type="email" value={editingUser.email} onChange={e => setEditingUser({...editingUser, email: e.target.value})}
+                    className="w-full border border-slate-300 rounded px-2.5 py-1.5 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Phone</label>
+                  <input type="text" value={editingUser.phone || ''} onChange={e => setEditingUser({...editingUser, phone: e.target.value})}
+                    className="w-full border border-slate-300 rounded px-2.5 py-1.5 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Department Role</label>
+                  <select value={editingUser.role} onChange={e => setEditingUser({...editingUser, role: e.target.value})}
+                    className="w-full border border-slate-300 rounded px-2.5 py-1.5 text-sm">
+                    <option value="PreSales">PreSales</option>
+                    <option value="Sales">Sales</option>
+                    <option value="SourcingManager">Sourcing Manager</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Access Role</label>
+                  <select value={editingUser.accessRole} onChange={e => setEditingUser({...editingUser, accessRole: e.target.value})}
+                    className="w-full border border-slate-300 rounded px-2.5 py-1.5 text-sm">
+                    <option value="Worker">Worker</option>
+                    <option value="CompanyAdmin">Company Admin</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">New Password <span className="text-slate-400 font-normal">(leave blank to keep)</span></label>
+                  <input type="password" value={editingUser.password || ''} onChange={e => setEditingUser({...editingUser, password: e.target.value})}
+                    placeholder="Min 8 characters"
+                    className="w-full border border-slate-300 rounded px-2.5 py-1.5 text-sm" />
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <input type="checkbox" id="editCanViewAll" checked={editingUser.canViewAllCompanyLeads}
+                  onChange={e => setEditingUser({...editingUser, canViewAllCompanyLeads: e.target.checked})}
+                  className="w-4 h-4" />
+                <label htmlFor="editCanViewAll" className="text-sm text-slate-700">Can view all company leads</label>
+              </div>
+              <div className="flex gap-2 pt-3 border-t border-slate-200">
+                <button
+                  onClick={async () => {
+                    try {
+                      await crmApi.editUser(editingUser.id, {
+                        name: editingUser.name,
+                        email: editingUser.email,
+                        phone: editingUser.phone,
+                        role: editingUser.role,
+                        accessRole: editingUser.accessRole,
+                        canViewAllCompanyLeads: editingUser.canViewAllCompanyLeads,
+                        password: editingUser.password || null
+                      });
+                      setEditingUser(null);
+                      loadCompanyUsers(currentTeamPage);
+                    } catch (err) {
+                      alert(err.response?.data || 'Failed to update user.');
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium text-sm"
+                >Save Changes</button>
+                <button onClick={() => setEditingUser(null)}
+                  className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-900 rounded-lg font-medium text-sm"
+                >Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Set Holiday Modal */}
+      {holidayUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+            <div className="border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-slate-900">Set Holiday — {holidayUser.name}</h2>
+              <button onClick={() => setHolidayUser(null)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-slate-600">No leads will be assigned to this user during the holiday period.</p>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Holiday Start</label>
+                <input type="date" value={holidayForm.start} onChange={e => setHolidayForm({...holidayForm, start: e.target.value})}
+                  className="w-full border border-slate-300 rounded px-2.5 py-1.5 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Holiday End <span className="text-slate-400 font-normal">(inclusive)</span></label>
+                <input type="date" value={holidayForm.end} onChange={e => setHolidayForm({...holidayForm, end: e.target.value})}
+                  className="w-full border border-slate-300 rounded px-2.5 py-1.5 text-sm" />
+              </div>
+              <div className="flex gap-2 pt-2 border-t border-slate-200">
+                <button
+                  onClick={async () => {
+                    if (!holidayForm.start || !holidayForm.end) { alert('Please set both start and end dates.'); return; }
+                    if (new Date(holidayForm.end) < new Date(holidayForm.start)) { alert('End date must be after start date.'); return; }
+                    try {
+                      await crmApi.setUserHoliday(holidayUser.id, {
+                        holidayStart: holidayForm.start,
+                        // end date is inclusive so push to midnight of next day
+                        holidayEnd: new Date(new Date(holidayForm.end).getTime() + 86400000).toISOString().slice(0, 10),
+                        clear: false
+                      });
+                      setHolidayUser(null);
+                      loadCompanyUsers(currentTeamPage);
+                    } catch (err) {
+                      alert(err.response?.data || 'Failed to set holiday.');
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium text-sm"
+                >Set Holiday</button>
+                <button onClick={() => setHolidayUser(null)}
+                  className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-900 rounded-lg font-medium text-sm"
+                >Cancel</button>
               </div>
             </div>
           </div>

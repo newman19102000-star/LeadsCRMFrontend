@@ -25,6 +25,14 @@ export const crmApi = {
     api.post('/auth/users', payload).then(r => r.data),
   updateUserPermissions: (id, payload) =>
     api.put(`/auth/users/${id}/permissions`, payload).then(r => r.data),
+  editUser: (id, payload) =>
+    api.put(`/auth/users/${id}`, payload).then(r => r.data),
+  deleteUser: (id) =>
+    api.delete(`/auth/users/${id}`).then(r => r.data),
+  markUserAbsent: (id, clear = false) =>
+    api.put(`/auth/users/${id}/absent`, { clear }).then(r => r.data),
+  setUserHoliday: (id, payload) =>
+    api.put(`/auth/users/${id}/holiday`, payload).then(r => r.data),
 
   // Leads Workspace APIs
   getDashboardCounts: () => api.get('/leads/dashboard-counts').then(r => r.data),
