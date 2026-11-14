@@ -3,6 +3,8 @@ import { crmApi } from './api/crmApi';
 import { useCrmRealtime } from './hooks/useCrmRealtime';
 import LeadDetailsModal from './components/LeadDetailsModal';
 import InstallPWA from './components/InstallPWA';
+import MobileLeadCards from './components/MobileLeadCards';
+import MobileTaskCards from './components/MobileTaskCards';
 import { requestNotificationPermission, showLeadNotification } from './utils/notifications';
 import {
   Users, CheckSquare, Search, RefreshCw, MoreVertical,
@@ -801,7 +803,20 @@ export default function App() {
             </div>
 
             {/* 22-COLUMN LEADS TABLE */}
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-x-auto">
+            {/* Mobile cards — hidden on sm+ */}
+            <div className="sm:hidden">
+              <MobileLeadCards
+                leads={leadsData.data}
+                loading={loadingLeads}
+                openMenuLeadId={openMenuLeadId}
+                setOpenMenuLeadId={setOpenMenuLeadId}
+                onViewDetails={(r) => { setSelectedLeadId(r.id); setViewLeadModalOpen(true); }}
+                handleRowAction={handleRowAction}
+                isAdmin={isAdmin}
+              />
+            </div>
+            {/* Desktop table — hidden on mobile */}
+            <div className="hidden sm:block bg-white rounded-lg border border-slate-200 shadow-sm overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
                 <thead>
                   <tr className="bg-slate-50 text-slate-700 font-semibold border-b-2 border-slate-300 uppercase text-[10px] tracking-wide">
@@ -957,7 +972,7 @@ export default function App() {
                   )}
                 </tbody>
               </table>
-            </div>
+            </div>{/* end desktop leads table */}
 
             {/* Leads Pagination */}
             {leadsData.totalCount > 0 && (
@@ -1014,7 +1029,25 @@ export default function App() {
               ))}
             </div>
 
-            <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-x-auto">
+            {/* Mobile task cards — hidden on sm+ */}
+            <div className="sm:hidden">
+              <MobileTaskCards
+                tasks={tasksData.data}
+                loading={loadingTasks}
+                onViewTask={async (taskId) => {
+                  try {
+                    const taskDetails = await crmApi.getTask(taskId);
+                    setSelectedTaskDetails(taskDetails);
+                    setViewTaskModalOpen(true);
+                  } catch (err) {
+                    alert('Could not load task details.');
+                  }
+                }}
+              />
+            </div>
+
+            {/* Desktop table — hidden on mobile */}
+            <div className="hidden sm:block bg-white rounded-lg border border-slate-200 shadow-xs overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
                 <thead>
                   <tr className="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200 uppercase">
