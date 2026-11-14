@@ -331,32 +331,38 @@ const LeadDetailsModal = ({ leadId, isOpen, onClose }) => {
                   <h3 className="font-semibold text-gray-800 text-lg mb-4">Activity Timeline</h3>
                   {lead.activities && lead.activities.length > 0 ? (
                     <div className="space-y-4">
-                      {lead.activities.map((activity, index) => (
-                        <div key={activity.id} className="flex gap-4">
-                          <div className="flex flex-col items-center">
-                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                              <Clock className="w-5 h-5 text-blue-600" />
+                      {lead.activities.map((activity, index) => {
+                        const typeStyles = {
+                          'TaskCreated': { bg: 'bg-indigo-100', text: 'text-indigo-600', label: 'Task Created' },
+                          'TaskUpdated': { bg: 'bg-blue-100', text: 'text-blue-600', label: 'Task Updated' },
+                          'TaskCompleted': { bg: 'bg-emerald-100', text: 'text-emerald-600', label: 'Task Completed' },
+                          'StageChange': { bg: 'bg-amber-100', text: 'text-amber-600', label: 'Stage Changed' },
+                          'ConvertedToContact': { bg: 'bg-emerald-100', text: 'text-emerald-600', label: 'Converted to Contact' },
+                          'LeadTransferred': { bg: 'bg-orange-100', text: 'text-orange-600', label: 'Lead Transferred' },
+                        };
+                        const style = typeStyles[activity.activityType] || { bg: 'bg-slate-100', text: 'text-slate-600', label: activity.activityType || 'Activity' };
+                        return (
+                          <div key={activity.id} className="flex gap-4">
+                            <div className="flex flex-col items-center">
+                              <div className={`w-10 h-10 rounded-full ${style.bg} flex items-center justify-center`}>
+                                <Clock className={`w-5 h-5 ${style.text}`} />
+                              </div>
+                              {index < lead.activities.length - 1 && (
+                                <div className="w-0.5 h-full bg-gray-200 mt-2"></div>
+                              )}
                             </div>
-                            {index < lead.activities.length - 1 && (
-                              <div className="w-0.5 h-full bg-gray-200 mt-2"></div>
-                            )}
-                          </div>
-                          <div className="flex-1 bg-gray-50 rounded-lg p-4 mb-4">
-                            <div className="flex items-start justify-between mb-2">
-                              <p className="font-semibold text-gray-800">{activity.title}</p>
-                              <span className="text-sm text-gray-500">{formatDate(activity.createdAt)}</span>
+                            <div className="flex-1 bg-gray-50 rounded-lg p-4 mb-4">
+                              <div className="flex items-start justify-between mb-2">
+                                <p className="font-semibold text-gray-800">{style.label}</p>
+                                <span className="text-sm text-gray-500">{formatDate(activity.createdAt)}</span>
+                              </div>
+                              {activity.notes && (
+                                <p className="text-gray-600 text-sm whitespace-pre-wrap">{activity.notes}</p>
+                              )}
                             </div>
-                            {activity.notes && (
-                              <p className="text-gray-600 text-sm whitespace-pre-wrap">{activity.notes}</p>
-                            )}
-                            {activity.activityType && (
-                              <span className="inline-block mt-2 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
-                                {activity.activityType}
-                              </span>
-                            )}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="bg-gray-50 rounded-lg p-8 text-center">
