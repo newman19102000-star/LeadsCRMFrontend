@@ -7,6 +7,7 @@ import MobileLeadCards from './components/MobileLeadCards';
 import MobileTaskCards from './components/MobileTaskCards';
 import CrmDashboard from './components/CrmDashboard';
 import ErrorBoundary from './components/ErrorBoundary';
+import ScrollNav from './components/ScrollNav';
 import { requestNotificationPermission, showLeadNotification } from './utils/notifications';
 import {
   Users, CheckSquare, Search, RefreshCw, MoreVertical,
@@ -616,7 +617,7 @@ export default function App() {
             </div>
           </div>
 
-          <nav className="hidden sm:flex gap-1 min-w-0 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          <ScrollNav className="hidden sm:block">
             <button
               onClick={() => setActivePage('crm')}
               className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition whitespace-nowrap flex-shrink-0 ${
@@ -670,7 +671,7 @@ export default function App() {
                 </button>
               </>
             )}
-          </nav>
+          </ScrollNav>
         </div>
 
         {/* Mobile Navigation */}
