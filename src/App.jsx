@@ -34,6 +34,11 @@ export default function App() {
   const [activePage, setActivePage] = useState('leads'); // 'leads' | 'tasks' | 'campaigns' | 'team' | 'projects'
   const [projects, setProjects] = useState([]);
   const [editingProject, setEditingProject] = useState(null); // null = closed, {} = new, {id,...} = edit
+  const [showAddLeadModal, setShowAddLeadModal] = useState(false);
+  const [addLeadForm, setAddLeadForm] = useState({
+    name: '', primaryNo: '', email: '', requirement: '', subLocation: '',
+    budget: '', remark: '', ethnicity: '', tags: '', formName: '', projectId: ''
+  });
   const [counts, setCounts] = useState(null);
   const [lookups, setLookups] = useState({ teamMembers: [], projects: [], channelPartners: [], stages: [] });
 
@@ -641,7 +646,7 @@ export default function App() {
         </div>
 
         {/* Mobile Navigation */}
-        <nav className="flex sm:hidden gap-1 w-full overflow-x-auto pb-1">
+        <nav className="flex flex-wrap sm:hidden gap-1.5 w-full pb-1">
           <button
             onClick={() => setActivePage('leads')}
             className={`px-2.5 py-1.5 rounded-md text-[10px] font-medium flex items-center gap-1 transition whitespace-nowrap ${
@@ -813,6 +818,16 @@ export default function App() {
                 </div>
                 <button type="submit" className="bg-indigo-600 text-white text-sm px-3 py-1.5 rounded-md hover:bg-indigo-700 whitespace-nowrap">
                   Search
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddLeadForm({ name: '', primaryNo: '', email: '', requirement: '', subLocation: '', budget: '', remark: '', ethnicity: '', tags: '', formName: '', projectId: '' });
+                    setShowAddLeadModal(true);
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-3 py-1.5 rounded-md flex items-center gap-1.5 whitespace-nowrap"
+                >
+                  <Plus className="w-4 h-4" /> Add Lead
                 </button>
               </form>
             </div>
@@ -2016,6 +2031,150 @@ export default function App() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ADD LEAD MANUALLY MODAL */}
+      {showAddLeadModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-md shadow-2xl max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 flex-shrink-0">
+              <div>
+                <h2 className="font-bold text-slate-900">Add Lead Manually</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Lead will be assigned to your account</p>
+              </div>
+              <button onClick={() => setShowAddLeadModal(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400">✕</button>
+            </div>
+
+            {/* Scrollable body */}
+            <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
+
+              {/* Required fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Full Name <span className="text-rose-500">*</span></label>
+                  <input type="text" value={addLeadForm.name} onChange={e => setAddLeadForm({ ...addLeadForm, name: e.target.value })}
+                    placeholder="e.g. Rahul Sharma"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Mobile Number <span className="text-rose-500">*</span></label>
+                  <input type="tel" value={addLeadForm.primaryNo} onChange={e => setAddLeadForm({ ...addLeadForm, primaryNo: e.target.value })}
+                    placeholder="e.g. 9876543210"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Email</label>
+                <input type="email" value={addLeadForm.email} onChange={e => setAddLeadForm({ ...addLeadForm, email: e.target.value })}
+                  placeholder="e.g. rahul@example.com"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+
+              {/* Project + Form mapping */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Map to Project</label>
+                  <select value={addLeadForm.projectId} onChange={e => setAddLeadForm({ ...addLeadForm, projectId: e.target.value })}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="">-- None --</option>
+                    {(lookups.projects || []).map(p => (
+                      <option key={p.id} value={p.id}>{p.name}{p.subLocation ? ` (${p.subLocation})` : ''}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Form / Lead Source Name</label>
+                  <input type="text" value={addLeadForm.formName} onChange={e => setAddLeadForm({ ...addLeadForm, formName: e.target.value })}
+                    placeholder="e.g. Walk-in, Referral…"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+              </div>
+
+              {/* Lead details */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Requirement</label>
+                  <input type="text" value={addLeadForm.requirement} onChange={e => setAddLeadForm({ ...addLeadForm, requirement: e.target.value })}
+                    placeholder="e.g. 2 BHK, 3 BHK"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Budget</label>
+                  <input type="text" value={addLeadForm.budget} onChange={e => setAddLeadForm({ ...addLeadForm, budget: e.target.value })}
+                    placeholder="e.g. 1.5 Cr"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Preferred Location</label>
+                  <input type="text" value={addLeadForm.subLocation} onChange={e => setAddLeadForm({ ...addLeadForm, subLocation: e.target.value })}
+                    placeholder="e.g. Andheri West"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Ethnicity</label>
+                  <input type="text" value={addLeadForm.ethnicity} onChange={e => setAddLeadForm({ ...addLeadForm, ethnicity: e.target.value })}
+                    placeholder="e.g. Gujarati"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Tags</label>
+                <input type="text" value={addLeadForm.tags} onChange={e => setAddLeadForm({ ...addLeadForm, tags: e.target.value })}
+                  placeholder="Comma separated e.g. VIP, Referral"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Initial Remark</label>
+                <textarea rows={2} value={addLeadForm.remark} onChange={e => setAddLeadForm({ ...addLeadForm, remark: e.target.value })}
+                  placeholder="Any notes about this lead…"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex gap-2 px-5 py-3 border-t border-slate-200 flex-shrink-0">
+              <button onClick={() => setShowAddLeadModal(false)}
+                className="flex-1 py-2.5 border border-slate-300 rounded-lg text-slate-700 text-sm font-medium hover:bg-slate-50">
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!addLeadForm.name.trim()) { alert('Name is required.'); return; }
+                  if (!addLeadForm.primaryNo.trim()) { alert('Mobile number is required.'); return; }
+                  try {
+                    const result = await crmApi.createManualLead({
+                      name: addLeadForm.name,
+                      primaryNo: addLeadForm.primaryNo,
+                      email: addLeadForm.email || null,
+                      requirement: addLeadForm.requirement || null,
+                      subLocation: addLeadForm.subLocation || null,
+                      budget: addLeadForm.budget || null,
+                      remark: addLeadForm.remark || null,
+                      ethnicity: addLeadForm.ethnicity || null,
+                      tags: addLeadForm.tags || null,
+                      formName: addLeadForm.formName || null,
+                      projectId: addLeadForm.projectId ? Number(addLeadForm.projectId) : null,
+                    });
+                    setShowAddLeadModal(false);
+                    alert(`✅ Lead ${result.leadId} (${result.name}) created successfully.`);
+                    refreshAll();
+                  } catch (err) {
+                    alert(err.response?.data || 'Failed to create lead.');
+                  }
+                }}
+                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-sm">
+                Create Lead
+              </button>
+            </div>
           </div>
         </div>
       )}

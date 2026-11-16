@@ -40,6 +40,9 @@ export const crmApi = {
   updateProject: (id, payload) => api.put(`/projects/${id}`, payload).then(r => r.data),
   deleteProject: (id) => api.delete(`/projects/${id}`).then(r => r.data),
 
+  // Manual lead creation
+  createManualLead: (payload) => api.post('/leads', payload).then(r => r.data),
+
   // Leads Workspace APIs
   getDashboardCounts: () => api.get('/leads/dashboard-counts').then(r => r.data),
   getLookups: () => api.get('/leads/lookups').then(r => r.data),
