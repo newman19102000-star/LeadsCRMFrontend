@@ -6,6 +6,7 @@ import InstallPWA from './components/InstallPWA';
 import MobileLeadCards from './components/MobileLeadCards';
 import MobileTaskCards from './components/MobileTaskCards';
 import CrmDashboard from './components/CrmDashboard';
+import ErrorBoundary from './components/ErrorBoundary';
 import { requestNotificationPermission, showLeadNotification } from './utils/notifications';
 import {
   Users, CheckSquare, Search, RefreshCw, MoreVertical,
@@ -758,7 +759,7 @@ export default function App() {
 
       <main className="space-y-4 sm:space-y-6">
         {activePage === 'crm' ? (
-          <CrmDashboard />
+          <ErrorBoundary><CrmDashboard /></ErrorBoundary>
         ) : activePage === 'leads' ? (
           <div className="px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6  ">
             {/* 1. ALL LEADS & TODAY'S LEADS SUMMARY TABS */}

@@ -70,8 +70,11 @@ export default function CrmDashboard() {
     <div className="flex items-center justify-center h-64 text-slate-400 text-sm">Could not load data.</div>
   );
 
-  const { Summary, LeadStageDistribution, LeadStatusDistribution, TaskSummary, TaskByActivityType } = data;
-  const totalLeads = Summary.totalLeads;
+  const Summary = data.summary || data.Summary || {};
+  const LeadStageDistribution = data.leadStageDistribution || data.LeadStageDistribution || [];
+  const TaskSummary = data.taskSummary || data.TaskSummary || { total: 0, overdue: 0, today: 0, upcoming: 0, completed: 0 };
+  const TaskByActivityType = data.taskByActivityType || data.TaskByActivityType || [];
+  const totalLeads = Summary.totalLeads || 0;
 
   // Group stages by their defaultStatus for section headers
   const activeStages    = LeadStageDistribution.filter(s => s.defaultStatus === 'Active');
