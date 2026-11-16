@@ -15,7 +15,8 @@ function fmt(val) {
 
 function ActionSheet({ lead, onClose, handleRowAction, isAdmin }) {
   const items = [
-    { action: 'add_task',         label: 'Add Task / Update Stage', icon: <Calendar  className="w-4 h-4 text-indigo-500" /> },
+    { action: 'add_task',         label: 'Add Task / Schedule Follow-up', icon: <Calendar  className="w-4 h-4 text-indigo-500" /> },
+    { action: 'update_stage',     label: 'Update Stage Only',             icon: <ArrowRightLeft className="w-4 h-4 text-purple-500" /> },
     { action: 'view',             label: 'View Details',            icon: <Eye       className="w-4 h-4 text-blue-500" /> },
     { action: 'convert',          label: 'Convert to Contact',      icon: <CheckSquare className="w-4 h-4 text-emerald-500" /> },
     ...(isAdmin ? [{ action: 'transfer', label: 'Transfer Lead',    icon: <ArrowRightLeft className="w-4 h-4 text-amber-500" /> }] : []),

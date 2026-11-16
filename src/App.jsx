@@ -445,9 +445,21 @@ export default function App() {
       return;
     }
 
+    if (action === 'update_stage') {
+      setFormState({
+        stage: lead.leadStage || 'New Lead',
+        stageReason: '',
+        updateStage: true,
+        remark: '',
+      });
+      setActiveModal({ type: 'update_stage', lead });
+      return;
+    }
+
     setFormState({
       stage: lead.leadStage || 'Call Back',
       stageReason: lead.stageReason !== '-' ? lead.stageReason : 'Customer Was Traveling Ask To Callback',
+      updateStage: false,
       activityType: 'CALL',
       scheduleDate: new Date(Date.now() + 3600 * 1000).toISOString().slice(0, 16),
       title: `Followup Task With ${lead.name}`,
@@ -485,7 +497,7 @@ export default function App() {
         title: formState.title || `Followup Task With ${lead.name}`,
         remark: formState.remark,
         activityType: formState.activityType,
-        stage: formState.stage
+        stage: formState.updateStage !== false ? formState.stage : lead.leadStage
       });
     } else if (type === 'transfer') {
       await crmApi.transferLead(lead.id, {
@@ -505,6 +517,12 @@ export default function App() {
       await crmApi.addChannelPartner(lead.id, Number(formState.channelPartnerId));
     } else if (type === 'suggest_property') {
       await crmApi.suggestProperty(lead.id, Number(formState.projectId));
+    } else if (type === 'update_stage') {
+      await crmApi.changeStage(lead.id, {
+        stage: formState.stage,
+        stageReason: formState.stageReason,
+        remark: formState.remark,
+      });
     } else if (type === 'edit') {
       await crmApi.editLead(lead.id, {
         name: formState.name,
@@ -723,13 +741,13 @@ export default function App() {
 
       <main className="space-y-4 sm:space-y-6">
         {activePage === 'leads' ? (
-          <div className="px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+          <div className="px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6  ">
             {/* 1. ALL LEADS & TODAY'S LEADS SUMMARY TABS */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
               <div className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4 shadow-xs overflow-hidden">
-                <h2 className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 sm:mb-3">
-                  1. {isAdmin || currentUser.canViewAllCompanyLeads ? 'All Company Leads' : 'My Assigned Leads'}
-                </h2>
+                <h2 className="text-[11px] sm:text-xs font-bold uppercase tracking-wider mb-2 sm:mb-3 !text-black">
+  1. {isAdmin || currentUser.canViewAllCompanyLeads ? 'All Company Leads' : 'My Assigned Leads'}
+</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
                   {[
                     { key: 'all_total', label: 'Total', val: counts?.allLeads?.total ?? 0 },
@@ -754,7 +772,7 @@ export default function App() {
               </div>
 
               <div className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4 shadow-xs overflow-hidden">
-                <h2 className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 sm:mb-3">
+                <h2 className="text-[11px] sm:text-xs font-bold uppercase tracking-wider mb-2 sm:mb-3 !text-black">
                   2. Today's Leads (IST)
                 </h2>
                 <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 sm:gap-2">
@@ -955,6 +973,9 @@ export default function App() {
                               <div className="absolute right-8 top-0 w-52 bg-white border border-slate-200 rounded-lg shadow-2xl py-1 z-[100] text-left">
                                 <button onClick={() => handleRowAction('add_task', r)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs">
                                   <Calendar className="w-3.5 h-3.5 text-indigo-600" /> Add Task / Update Stage
+                                </button>
+                                <button onClick={() => handleRowAction('update_stage', r)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs">
+                                  <ArrowRightLeft className="w-3.5 h-3.5 text-purple-600" /> Update Stage Only
                                 </button>
                                 <button onClick={() => handleRowAction('view', r)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs">
                                   <Eye className="w-3.5 h-3.5 text-blue-600" /> View Details
@@ -1213,13 +1234,13 @@ export default function App() {
             <div className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4 shadow-xs space-y-3 sm:space-y-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
                 <div>
-                  <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+                  <h2 style={{ color: '#000000' }} className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
                     Connected Facebook Pages ({(metaPagesInfo.pages || []).length})
                   </h2>
-                  <p className="text-[11px] sm:text-xs text-slate-500 mt-1">
-                    Connect multiple Facebook Pages for {currentUser.companyName}. Leads from these pages route exclusively to your company's agents.
-                  </p>
+                  <p style={{ color: '#000000' }} className="text-[11px] sm:text-xs mt-1">
+  Connect multiple Facebook Pages for {currentUser.companyName}. Leads from these pages route exclusively to your company's agents.
+</p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                   <button
@@ -1290,7 +1311,9 @@ export default function App() {
 
             <div className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
               <div>
-                <h2 className="text-sm sm:text-base font-bold text-slate-900">Connected Facebook Campaigns & Instant Forms</h2>
+                <h2 style={{ color: '#000000' }} className="text-sm sm:text-base font-bold text-left w-full mr-auto">
+  Connected Facebook Campaigns & Instant Forms
+</h2>
                 <p className="text-[11px] sm:text-xs text-slate-500 mt-1">
                   Map Facebook Campaigns to CRM Projects, configure automatic Pre-Sales routing, and track Cost-Per-Lead (CPL) & Site Visits.
                 </p>
@@ -1438,7 +1461,7 @@ export default function App() {
           /* TEAM & ACCESS CONTROL WORKSPACE (ADMIN ONLY) */
           <div className="px-3 sm:px-6 py-4 sm:py-6 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
             <div className="bg-white rounded-lg border border-slate-200 p-4 sm:p-5 shadow-xs">
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 mb-1">Add Company User / Worker</h2>
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 mb-1 !text-black">Add Company User / Worker</h2>
               <p className="text-[11px] sm:text-xs text-slate-500 mb-3 sm:mb-4">
                 Create Pre-Sales, Sales, or Sourcing accounts for <strong>{currentUser.companyName}</strong> and configure their lead visibility scope.
               </p>
@@ -1551,7 +1574,7 @@ export default function App() {
 
             <div className="lg:col-span-2 bg-white rounded-lg border border-slate-200 shadow-xs">
               <div className="p-3 sm:p-4 border-b border-slate-200">
-                <h2 className="text-sm sm:text-base font-bold text-slate-900">
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 !text-black">
                   {currentUser.companyName} — Team Directory & Data Visibility Scopes
                 </h2>
                 <p className="text-[11px] sm:text-xs text-slate-500 mt-1">
@@ -1782,7 +1805,7 @@ export default function App() {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="text-xl font-bold text-slate-900">Projects</h1>
+                <h1 className="text-xl font-bold text-slate-900  text-left !text-black">Projects</h1>
                 <p className="text-sm text-slate-500 mt-0.5">Manage the real-estate projects leads are tagged against.</p>
               </div>
               <button
@@ -2195,8 +2218,24 @@ export default function App() {
                 <div className="overflow-y-auto flex-1 px-4 py-3 space-y-2.5 text-xs">
                 {activeModal.type === 'add_task' && (
                   <>
+                    {/* Current stage indicator + update toggle */}
+                    <div className="bg-slate-50 rounded-lg px-3 py-2 flex items-center justify-between">
+                      <span className="text-[11px] text-slate-500">Current stage: <span className="font-semibold text-indigo-700">{activeModal.lead.leadStage || 'New Lead'}</span></span>
+                      <label className="flex items-center gap-1.5 text-[11px] text-slate-600 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={formState.updateStage !== false}
+                          onChange={e => setFormState({ ...formState, updateStage: e.target.checked })}
+                          className="rounded"
+                        />
+                        Update stage
+                      </label>
+                    </div>
+
+                    {formState.updateStage !== false && (
+                      <>
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Lead Stage</label>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Update Stage To</label>
                       <select
                         value={formState.stage}
                         onChange={(e) => {
@@ -2224,6 +2263,8 @@ export default function App() {
                         ))}
                       </select>
                     </div>
+                      </>
+                    )}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div>
                         <label className="block text-[11px] font-semibold text-slate-600 mb-1">Activity Type</label>
@@ -2266,6 +2307,36 @@ export default function App() {
                         onChange={(e) => setFormState({ ...formState, remark: e.target.value })}
                         className="w-full border border-slate-300 rounded px-2.5 py-1.5"
                       />
+                    </div>
+                  </>
+                )}
+
+                {activeModal.type === 'update_stage' && (
+                  <>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">New Stage</label>
+                      <select
+                        value={formState.stage}
+                        onChange={(e) => { const st = (lookups.stages||[]).find(s=>s.stage===e.target.value); setFormState({...formState, stage:e.target.value, stageReason:st?.allowedReasons?.[0]||''}); }}
+                        className="w-full border border-slate-300 rounded px-2.5 py-1.5"
+                      >
+                        {(lookups.stages||[]).map(s=><option key={s.stage} value={s.stage}>{s.stage}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Stage Reason</label>
+                      <select
+                        value={formState.stageReason}
+                        onChange={(e)=>setFormState({...formState,stageReason:e.target.value})}
+                        className="w-full border border-slate-300 rounded px-2.5 py-1.5"
+                      >
+                        {((lookups.stages||[]).find(s=>s.stage===formState.stage)?.allowedReasons||[]).map(r=><option key={r} value={r}>{r}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Remark</label>
+                      <textarea rows={2} value={formState.remark} onChange={e=>setFormState({...formState,remark:e.target.value})}
+                        className="w-full border border-slate-300 rounded px-2.5 py-1.5" />
                     </div>
                   </>
                 )}
@@ -2639,7 +2710,7 @@ export default function App() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900">Tasks for Lead</h2>
+              <h2 className="text-xl font-bold text-slate-900 !text-black">Tasks for Lead</h2>
               <button
                 onClick={() => {
                   setViewTasksModalOpen(false);
