@@ -8,12 +8,14 @@ import MobileTaskCards from './components/MobileTaskCards';
 import CrmDashboard from './components/CrmDashboard';
 import ErrorBoundary from './components/ErrorBoundary';
 import ScrollNav from './components/ScrollNav';
+import CallLogSheet from './components/CallLogSheet';
+import { useCallFlow } from './hooks/useCallFlow';
 import { requestNotificationPermission, showLeadNotification } from './utils/notifications';
 import {
   Users, CheckSquare, Search, RefreshCw, MoreVertical,
   Calendar, Building2, UserPlus, ArrowRightLeft, Trash2, Edit3,
   Eye, Bell, Wifi, Layers, Plus, Link2, ShieldCheck, LogOut, Lock, X,
-  Home, MapPin
+  Home, MapPin, Phone
 } from 'lucide-react';
 
 export default function App() {
@@ -206,6 +208,10 @@ export default function App() {
   }, [currentUser, activePage, activeLeadTab, activeTaskTab, searchQuery, loadCountsAndLookups, loadLeads, loadTasks, loadCampaignsAndPages]);
 
   const wsStatus = useCrmRealtime(handleRealtimeLead, currentUser);
+  const { sheet: callSheet, startCall, logManual, closeSheet: closeCallSheet } = useCallFlow({
+    enabled: !!currentUser,
+    onChange: () => refreshAll(),
+  });
 
   useEffect(() => {
     if (currentUser) {
@@ -407,6 +413,10 @@ export default function App() {
 
   const handleRowAction = async (action, lead) => {
     setOpenMenuLeadId(null);
+
+    // Call actions must run synchronously inside the tap so the phone dialer opens
+    if (action === 'call') { startCall(lead); return; }
+    if (action === 'log_call') { logManual(lead); return; }
 
     try {
     if (action === 'add_task') {
@@ -898,6 +908,7 @@ export default function App() {
                 setOpenMenuLeadId={setOpenMenuLeadId}
                 onViewDetails={(r) => { setSelectedLeadId(r.id); setViewLeadModalOpen(true); }}
                 handleRowAction={handleRowAction}
+                onCall={startCall}
                 isAdmin={isAdmin}
               />
             </div>
@@ -999,6 +1010,15 @@ export default function App() {
                         <td className="py-2.5 px-3 text-slate-600">{r.lastActivity}</td>
                         <td className="py-2.5 px-3">{r.ethnicity}</td>
                         <td className={`py-2.5 px-3 sticky right-0 text-center relative z-20 ${openMenuLeadId === r.id ? 'bg-indigo-50' : 'bg-white'}`}>
+                          <div className="flex items-center justify-center gap-0.5">
+                            <button
+                              onClick={() => startCall(r)}
+                              title="Call"
+                              aria-label={`Call ${r.name}`}
+                              className="p-1.5 rounded hover:bg-emerald-100 text-emerald-600 transition-colors"
+                            >
+                              <Phone className="w-4 h-4" />
+                            </button>
                           <div className="action-menu-container relative">
                             <button
                               onClick={() => setOpenMenuLeadId(openMenuLeadId === r.id ? null : r.id)}
@@ -1009,6 +1029,12 @@ export default function App() {
 
                             {openMenuLeadId === r.id && (
                               <div className="absolute right-8 top-0 w-52 bg-white border border-slate-200 rounded-lg shadow-2xl py-1 z-[100] text-left">
+                                <button onClick={() => handleRowAction('call', r)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs">
+                                  <Phone className="w-3.5 h-3.5 text-emerald-600" /> Call
+                                </button>
+                                <button onClick={() => handleRowAction('log_call', r)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs">
+                                  <Phone className="w-3.5 h-3.5 text-slate-400" /> Log Call (made elsewhere)
+                                </button>
                                 <button onClick={() => handleRowAction('add_task', r)} className="w-full px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-xs">
                                   <Calendar className="w-3.5 h-3.5 text-indigo-600" /> Add Task / Update Stage
                                 </button>
@@ -1054,6 +1080,7 @@ export default function App() {
                                 )}
                               </div>
                             )}
+                          </div>
                           </div>
                         </td>
                       </tr>
@@ -2095,6 +2122,13 @@ export default function App() {
           </div>
         </div>
       )}
+
+      <CallLogSheet
+        sheet={callSheet}
+        currentUserId={currentUser?.id}
+        onClose={closeCallSheet}
+        onSaved={() => refreshAll()}
+      />
 
       {/* ADD LEAD MANUALLY MODAL */}
       {showAddLeadModal && (

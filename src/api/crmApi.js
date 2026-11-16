@@ -43,6 +43,11 @@ export const crmApi = {
   // Manual lead creation
   createManualLead: (payload) => api.post('/leads', payload).then(r => r.data),
 
+  // Call logging
+  startCall: (leadId, payload = {}) => api.post(`/leads/${leadId}/calls/start`, payload).then(r => r.data),
+  updateCall: (leadId, activityId, payload) => api.put(`/leads/${leadId}/calls/${activityId}`, payload).then(r => r.data),
+  logCall: (leadId, payload) => api.post(`/leads/${leadId}/calls`, payload).then(r => r.data),
+
   // Analytics
   getCrmDashboard: () => api.get('/analytics/crm-dashboard').then(r => r.data),
 

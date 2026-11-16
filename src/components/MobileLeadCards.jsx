@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { MoreVertical, Calendar, Eye, CheckSquare, ArrowRightLeft, UserPlus, Users, Building2, Edit3, Trash2, X } from 'lucide-react';
+import { MoreVertical, Calendar, Eye, CheckSquare, ArrowRightLeft, UserPlus, Users, Building2, Edit3, Trash2, X, Phone } from 'lucide-react';
 
 const statusColors = {
   Hot:    'bg-rose-100 text-rose-700',
@@ -15,6 +16,8 @@ function fmt(val) {
 
 function ActionSheet({ lead, onClose, handleRowAction, isAdmin }) {
   const items = [
+    { action: 'call',             label: 'Call',                          icon: <Phone className="w-4 h-4 text-emerald-500" /> },
+    { action: 'log_call',         label: 'Log Call (made elsewhere)',     icon: <Phone className="w-4 h-4 text-slate-400" /> },
     { action: 'add_task',         label: 'Add Task / Schedule Follow-up', icon: <Calendar  className="w-4 h-4 text-indigo-500" /> },
     { action: 'update_stage',     label: 'Update Stage Only',             icon: <ArrowRightLeft className="w-4 h-4 text-purple-500" /> },
     { action: 'view',             label: 'View Details',            icon: <Eye       className="w-4 h-4 text-blue-500" /> },
@@ -67,10 +70,25 @@ function ActionSheet({ lead, onClose, handleRowAction, isAdmin }) {
   );
 }
 
+// The action sheet is portalled to <body>, so CSS on a parent (sm:hidden) cannot hide it.
+// Only show it on phone-sized viewports; desktop uses the dropdown next to the kebab instead.
+function useIsMobileViewport() {
+  const query = '(max-width: 639px)';
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const onChange = (e) => setIsMobile(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return isMobile;
+}
+
 export default function MobileLeadCards({
   leads, loading, openMenuLeadId, setOpenMenuLeadId,
-  onViewDetails, handleRowAction, isAdmin
+  onViewDetails, handleRowAction, onCall, isAdmin
 }) {
+  const isMobileViewport = useIsMobileViewport();
   if (loading) return <div className="py-12 text-center text-slate-400 text-sm">Loading leads…</div>;
   if (!leads?.length) return <div className="py-12 text-center text-slate-400 text-sm">No leads found.</div>;
 
@@ -111,18 +129,27 @@ export default function MobileLeadCards({
                   <span key={tag} className="px-1.5 py-0.5 rounded text-[9px] bg-slate-200 text-slate-600">{tag}</span>
                 ))}
               </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); setOpenMenuLeadId(r.id); }}
-                className="p-2 rounded-lg active:bg-slate-200 text-slate-500 flex-shrink-0 ml-2"
-              >
-                <MoreVertical className="w-5 h-5" />
-              </button>
+              <div className="flex items-center flex-shrink-0 ml-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onCall?.(r); }}
+                  className="p-2 rounded-lg active:bg-emerald-100 text-emerald-600"
+                  aria-label={`Call ${r.name}`}
+                >
+                  <Phone className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setOpenMenuLeadId(r.id); }}
+                  className="p-2 rounded-lg active:bg-slate-200 text-slate-500"
+                >
+                  <MoreVertical className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      {activeLead && (
+      {activeLead && isMobileViewport && (
         <ActionSheet
           lead={activeLead}
           onClose={() => setOpenMenuLeadId(null)}

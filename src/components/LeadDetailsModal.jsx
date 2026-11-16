@@ -37,6 +37,14 @@ const LeadDetailsModal = ({ leadId, isOpen, onClose, onNavigateToTask }) => {
     }
   };
 
+  const formatCallDuration = (secs) => {
+    if (secs == null) return null;
+    const h = Math.floor(secs / 3600), m = Math.floor((secs % 3600) / 60), sec = secs % 60;
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${sec}s`;
+    return `${sec}s`;
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleString('en-US', {
@@ -339,13 +347,16 @@ const LeadDetailsModal = ({ leadId, isOpen, onClose, onNavigateToTask }) => {
                           'StageChange': { bg: 'bg-amber-100', text: 'text-amber-600', label: 'Stage Changed' },
                           'ConvertedToContact': { bg: 'bg-emerald-100', text: 'text-emerald-600', label: 'Converted to Contact' },
                           'LeadTransferred': { bg: 'bg-orange-100', text: 'text-orange-600', label: 'Lead Transferred' },
+                          'CallLogged': { bg: 'bg-emerald-100', text: 'text-emerald-600', label: 'Call made' },
                         };
                         const style = typeStyles[activity.activityType] || { bg: 'bg-slate-100', text: 'text-slate-600', label: activity.activityType || 'Activity' };
                         return (
                           <div key={activity.id} className="flex gap-4">
                             <div className="flex flex-col items-center">
                               <div className={`w-10 h-10 rounded-full ${style.bg} flex items-center justify-center`}>
-                                <Clock className={`w-5 h-5 ${style.text}`} />
+                                {activity.activityType === 'CallLogged'
+                                  ? <Phone className={`w-5 h-5 ${style.text}`} />
+                                  : <Clock className={`w-5 h-5 ${style.text}`} />}
                               </div>
                               {index < lead.activities.length - 1 && (
                                 <div className="w-0.5 h-full bg-gray-200 mt-2"></div>
@@ -355,6 +366,19 @@ const LeadDetailsModal = ({ leadId, isOpen, onClose, onNavigateToTask }) => {
                               <div className="flex items-start justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                   <p className="font-semibold text-gray-800">{style.label}</p>
+                                  {activity.activityType === 'CallLogged' && activity.callStatus === 'Logged' && activity.callOutcome && (
+                                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                                      activity.callOutcome === 'Connected' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'
+                                    }`}>{activity.callOutcome}</span>
+                                  )}
+                                  {activity.activityType === 'CallLogged' && activity.callStatus !== 'Logged' && (
+                                    <span className="text-[11px] text-gray-500 italic">outcome not recorded</span>
+                                  )}
+                                  {activity.activityType === 'CallLogged' && activity.callDurationSeconds != null && (
+                                    <span className="text-[11px] text-gray-600">
+                                      {activity.callDurationIsEstimated ? '≈ ' : ''}{formatCallDuration(activity.callDurationSeconds)}
+                                    </span>
+                                  )}
                                   {activity.taskId && (
                                     <span className="font-mono text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded">
                                       TASK-{activity.taskId.substring(0, 8).toUpperCase()}
@@ -363,8 +387,13 @@ const LeadDetailsModal = ({ leadId, isOpen, onClose, onNavigateToTask }) => {
                                 </div>
                                 <span className="text-sm text-gray-500">{formatDate(activity.createdAt)}</span>
                               </div>
-                              {activity.notes && (
+                              {activity.notes
+                                && !(activity.activityType === 'CallLogged'
+                                  && (activity.callStatus !== 'Logged' || activity.notes === `Call: ${activity.callOutcome}`)) && (
                                 <p className="text-gray-600 text-sm whitespace-pre-wrap">{activity.notes}</p>
+                              )}
+                              {activity.activityType === 'CallLogged' && activity.createdByName && (
+                                <p className="text-xs text-gray-400 mt-1">by {activity.createdByName}</p>
                               )}
                               {activity.taskId && onNavigateToTask && (
                                 <button
