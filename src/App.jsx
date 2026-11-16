@@ -5,6 +5,7 @@ import LeadDetailsModal from './components/LeadDetailsModal';
 import InstallPWA from './components/InstallPWA';
 import MobileLeadCards from './components/MobileLeadCards';
 import MobileTaskCards from './components/MobileTaskCards';
+import CrmDashboard from './components/CrmDashboard';
 import { requestNotificationPermission, showLeadNotification } from './utils/notifications';
 import {
   Users, CheckSquare, Search, RefreshCw, MoreVertical,
@@ -31,7 +32,7 @@ export default function App() {
 
   const isAdmin = currentUser?.accessRole === 'CompanyAdmin' || currentUser?.accessRole === 'SuperAdmin';
 
-  const [activePage, setActivePage] = useState('leads'); // 'leads' | 'tasks' | 'campaigns' | 'team' | 'projects'
+  const [activePage, setActivePage] = useState('crm'); // 'crm' | 'leads' | 'tasks' | 'campaigns' | 'team' | 'projects'
   const [projects, setProjects] = useState([]);
   const [editingProject, setEditingProject] = useState(null); // null = closed, {} = new, {id,...} = edit
   const [showAddLeadModal, setShowAddLeadModal] = useState(false);
@@ -616,6 +617,14 @@ export default function App() {
 
           <nav className="hidden sm:flex gap-1.5">
             <button
+              onClick={() => setActivePage('crm')}
+              className={`px-3.5 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition ${
+                activePage === 'crm' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800'
+              }`}
+            >
+              <Home className="w-4 h-4" /> CRM
+            </button>
+            <button
               onClick={() => setActivePage('leads')}
               className={`px-3.5 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition ${
                 activePage === 'leads' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800'
@@ -665,6 +674,14 @@ export default function App() {
 
         {/* Mobile Navigation */}
         <nav className="flex flex-wrap sm:hidden gap-1.5 w-full pb-1">
+          <button
+            onClick={() => setActivePage('crm')}
+            className={`px-2.5 py-1.5 rounded-md text-[10px] font-medium flex items-center gap-1 transition whitespace-nowrap ${
+              activePage === 'crm' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
+            }`}
+          >
+            <Home className="w-3.5 h-3.5" /> CRM
+          </button>
           <button
             onClick={() => setActivePage('leads')}
             className={`px-2.5 py-1.5 rounded-md text-[10px] font-medium flex items-center gap-1 transition whitespace-nowrap ${
@@ -740,7 +757,9 @@ export default function App() {
       </header>
 
       <main className="space-y-4 sm:space-y-6">
-        {activePage === 'leads' ? (
+        {activePage === 'crm' ? (
+          <CrmDashboard />
+        ) : activePage === 'leads' ? (
           <div className="px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6  ">
             {/* 1. ALL LEADS & TODAY'S LEADS SUMMARY TABS */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
@@ -2836,7 +2855,7 @@ export default function App() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 bg-white">
-              <h2 className="text-xl font-bold text-slate-900">Task Details</h2>
+              <h2 className="text-xl font-bold text-slate-900 !text-black">Task Details</h2>
               <button
                 onClick={() => {
                   setViewTaskModalOpen(false);
