@@ -599,7 +599,7 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       {/* Top Navbar */}
       <header className="bg-slate-900 text-white px-3 sm:px-6 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 shadow">
-        <div className="flex items-center gap-3 sm:gap-6 w-full sm:w-auto">
+        <div className="flex items-center gap-3 sm:gap-6 w-full sm:w-auto sm:flex-1 sm:min-w-0">
           <div>
             <div className="flex items-center gap-2 font-bold text-sm sm:text-base tracking-tight">
               <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400" />
@@ -616,10 +616,10 @@ export default function App() {
             </div>
           </div>
 
-          <nav className="hidden sm:flex gap-1.5">
+          <nav className="hidden sm:flex gap-1 min-w-0 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
             <button
               onClick={() => setActivePage('crm')}
-              className={`px-3.5 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition ${
+              className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition whitespace-nowrap flex-shrink-0 ${
                 activePage === 'crm' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800'
               }`}
             >
@@ -627,42 +627,42 @@ export default function App() {
             </button>
             <button
               onClick={() => setActivePage('leads')}
-              className={`px-3.5 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition ${
+              className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition whitespace-nowrap flex-shrink-0 ${
                 activePage === 'leads' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800'
               }`}
             >
-              <Users className="w-4 h-4" /> Leads Workspace
+              <Users className="w-4 h-4" /> Leads
             </button>
             <button
               onClick={() => setActivePage('tasks')}
-              className={`px-3.5 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition ${
+              className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition whitespace-nowrap flex-shrink-0 ${
                 activePage === 'tasks' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800'
               }`}
             >
-              <CheckSquare className="w-4 h-4" /> Tasks Page
+              <CheckSquare className="w-4 h-4" /> Tasks
             </button>
 
             {isAdmin && (
               <>
                 <button
                   onClick={() => setActivePage('campaigns')}
-                  className={`px-3.5 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition whitespace-nowrap flex-shrink-0 ${
                     activePage === 'campaigns' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800'
                   }`}
                 >
-                  <Layers className="w-4 h-4" /> Meta Campaigns & Pages
+                  <Layers className="w-4 h-4" /> Campaigns
                 </button>
                 <button
                   onClick={() => setActivePage('team')}
-                  className={`px-3.5 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition whitespace-nowrap flex-shrink-0 ${
                     activePage === 'team' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800'
                   }`}
                 >
-                  <Lock className="w-4 h-4" /> Team & Access Control
+                  <Lock className="w-4 h-4" /> Team
                 </button>
                 <button
                   onClick={() => setActivePage('projects')}
-                  className={`px-3.5 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition whitespace-nowrap flex-shrink-0 ${
                     activePage === 'projects' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800'
                   }`}
                 >
@@ -730,22 +730,22 @@ export default function App() {
           )}
         </nav>
 
-        <div className="flex items-center gap-1.5 sm:gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 w-full sm:w-auto sm:flex-shrink-0 justify-between sm:justify-end">
           <span className={`flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs px-2 sm:px-2.5 py-1 rounded-full font-medium ${
             wsStatus === 'Connected'
               ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
               : 'bg-amber-950 text-amber-400 border border-amber-800'
           }`}>
             <Wifi className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-            <span className="hidden sm:inline">{wsStatus === 'Connected' ? 'Live Sync Active' : wsStatus}</span>
-            <span className="sm:hidden">{wsStatus === 'Connected' ? 'Live' : 'Off'}</span>
+            <span className="hidden xl:inline">{wsStatus === 'Connected' ? 'Live Sync Active' : wsStatus}</span>
+            <span className="xl:hidden">{wsStatus === 'Connected' ? 'Live' : 'Off'}</span>
           </span>
           <button
             onClick={refreshAll}
             className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs bg-slate-800 hover:bg-slate-700 px-2 sm:px-3 py-1.5 rounded border border-slate-700"
           >
             <RefreshCw className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-            <span className="hidden sm:inline">Refresh</span>
+            <span className="hidden xl:inline">Refresh</span>
           </button>
           <button
             onClick={handleLogout}
@@ -2946,7 +2946,7 @@ export default function App() {
 
               {/* Editable Task Fields */}
               <div className="border-t border-slate-200 pt-4">
-                <h3 className="text-sm font-bold text-slate-900 mb-3">Task Details</h3>
+                <h3 className="text-sm font-bold text-slate-900 mb-3 !text-black">Task Details</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">Activity Type</label>
