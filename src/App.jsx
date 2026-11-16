@@ -759,7 +759,21 @@ export default function App() {
 
       <main className="space-y-4 sm:space-y-6">
         {activePage === 'crm' ? (
-          <ErrorBoundary><CrmDashboard /></ErrorBoundary>
+          <ErrorBoundary>
+            <CrmDashboard
+              onOpenStage={(stage) => {
+                setSearchQuery('');
+                setCurrentLeadPage(1);
+                setActiveLeadTab(`stage:${stage}`);
+                setActivePage('leads');
+              }}
+              onOpenTasks={(tab) => {
+                setCurrentTaskPage(1);
+                setActiveTaskTab(tab);
+                setActivePage('tasks');
+              }}
+            />
+          </ErrorBoundary>
         ) : activePage === 'leads' ? (
           <div className="px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6  ">
             {/* 1. ALL LEADS & TODAY'S LEADS SUMMARY TABS */}
@@ -831,7 +845,10 @@ export default function App() {
             <div className="bg-white rounded-lg border border-slate-200 px-3 sm:px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-xs sm:text-sm font-semibold text-slate-700">
-                  Showing Filter: <span className="text-indigo-600 uppercase">{activeLeadTab.replaceAll('_', ' ')}</span>
+                  Showing Filter: <span className="text-indigo-600 uppercase">{activeLeadTab.startsWith('stage:') ? `Stage: ${activeLeadTab.slice(6)}` : activeLeadTab.replaceAll('_', ' ')}</span>
+                  {activeLeadTab.startsWith('stage:') && (
+                    <button onClick={() => setActiveLeadTab('all_total')} className="ml-2 text-[11px] text-slate-500 underline normal-case">clear</button>
+                  )}
                 </span>
                 <span className="text-xs bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full font-medium">
                   {leadsData.totalCount || 0} records
