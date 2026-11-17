@@ -10,6 +10,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import ScrollNav from './components/ScrollNav';
 import CallLogSheet from './components/CallLogSheet';
 import LeadExportModal from './components/LeadExportModal';
+import WhatsAppButton from './components/WhatsAppButton';
 import { useCallFlow } from './hooks/useCallFlow';
 import { showLeadNotification } from './utils/notifications';
 import {
@@ -1227,6 +1228,12 @@ export default function App() {
                             >
                               <Phone className="w-4 h-4" />
                             </button>
+                            <WhatsAppButton
+                              phone={r.primaryNo}
+                              name={r.name}
+                              className="p-1.5 rounded hover:bg-green-100 transition-colors"
+                              iconClassName="w-4 h-4"
+                            />
                           <div className="action-menu-container relative">
                             <button
                               onClick={() => setOpenMenuLeadId(openMenuLeadId === r.id ? null : r.id)}

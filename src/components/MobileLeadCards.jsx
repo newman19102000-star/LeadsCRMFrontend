@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import WhatsAppButton from './WhatsAppButton';
 import { MoreVertical, Calendar, Eye, CheckSquare, ArrowRightLeft, UserPlus, Users, Building2, Edit3, Trash2, X, Phone } from 'lucide-react';
 
 const statusColors = {
@@ -137,6 +138,12 @@ export default function MobileLeadCards({
                 >
                   <Phone className="w-5 h-5" />
                 </button>
+                <WhatsAppButton
+                  phone={r.primaryNo}
+                  name={r.name}
+                  className="p-2 rounded-lg active:bg-green-100"
+                  iconClassName="w-5 h-5"
+                />
                 <button
                   onClick={(e) => { e.stopPropagation(); setOpenMenuLeadId(r.id); }}
                   className="p-2 rounded-lg active:bg-slate-200 text-slate-500"
