@@ -3151,14 +3151,14 @@ export default function App() {
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-4 sm:p-6 space-y-4">
               {/* Lead Info - Read Only */}
-              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div>
+              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 sm:p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
                     <p className="text-xs text-indigo-600 font-semibold mb-1">ASSOCIATED LEAD</p>
                     <p className="font-semibold text-slate-900">{selectedTaskDetails?.leadName || 'N/A'}</p>
-                    <p className="text-sm text-slate-600">{selectedTaskDetails?.leadNumber || 'N/A'} • {selectedTaskDetails?.leadPhone || 'N/A'}</p>
+                    <p className="text-xs sm:text-sm text-slate-600">{selectedTaskDetails?.leadNumber || 'N/A'} • <span className="whitespace-nowrap">{selectedTaskDetails?.leadPhone || 'N/A'}</span></p>
                   </div>
                   {selectedTaskDetails?.leadId && (
                     <button
@@ -3168,7 +3168,7 @@ export default function App() {
                         setSelectedLeadId(selectedTaskDetails.leadId);
                         setViewLeadModalOpen(true);
                       }}
-                      className="px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium"
+                      className="flex-shrink-0 whitespace-nowrap px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs sm:text-sm font-medium"
                     >
                       View Lead →
                     </button>
@@ -3177,9 +3177,9 @@ export default function App() {
               </div>
 
               {/* Task Status Selector */}
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 sm:p-4">
                 <label className="block text-xs font-semibold text-slate-700 mb-2">TASK STATUS</label>
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(5.25rem,1fr))] sm:grid-cols-5 gap-1.5 sm:gap-2">
                   {['To Do', 'In Progress', 'Pending', 'Deferred', 'Completed'].map((s) => {
                     const isActive = selectedTaskDetails?.status === s;
                     const colors = {
@@ -3197,7 +3197,7 @@ export default function App() {
                           setSelectedTaskDetails({ ...selectedTaskDetails, status: s });
                           // Auto-set "In Progress" visual cue when leaving "To Do"
                         }}
-                        className={`px-2 py-1.5 rounded text-[11px] font-medium border transition ${
+                        className={`min-w-0 px-1.5 py-2 sm:py-1.5 rounded text-[11px] leading-tight font-medium border whitespace-nowrap truncate transition ${
                           isActive
                             ? `${colors[s]} border-current ring-1 ring-current`
                             : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
