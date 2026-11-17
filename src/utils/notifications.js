@@ -54,7 +54,7 @@ export function showLeadNotification(lead) {
   showNotification(title, {
     body,
     tag: `lead-${lead.id}`,
-    data: { leadId: lead.id, url: '/leads' },
+    data: { leadId: lead.id, url: `/?lead=${lead.id}` },
     actions: [
       { action: 'view', title: 'View Lead' },
       { action: 'dismiss', title: 'Dismiss' }

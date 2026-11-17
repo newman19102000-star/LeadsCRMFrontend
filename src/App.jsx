@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { crmApi } from './api/crmApi';
 import { useCrmRealtime } from './hooks/useCrmRealtime';
 import LeadDetailsModal from './components/LeadDetailsModal';
@@ -10,13 +10,16 @@ import ErrorBoundary from './components/ErrorBoundary';
 import ScrollNav from './components/ScrollNav';
 import CallLogSheet from './components/CallLogSheet';
 import { useCallFlow } from './hooks/useCallFlow';
-import { requestNotificationPermission, showLeadNotification } from './utils/notifications';
+import { showLeadNotification } from './utils/notifications';
+import { getPushState, enablePush, disablePush, unsubscribeOnLogout } from './utils/push';
 import {
   Users, CheckSquare, Search, RefreshCw, MoreVertical,
   Calendar, Building2, UserPlus, ArrowRightLeft, Trash2, Edit3,
-  Eye, Bell, Wifi, Layers, Plus, Link2, ShieldCheck, LogOut, Lock, X,
+  Eye, Bell, BellOff, Wifi, Layers, Plus, Link2, ShieldCheck, LogOut, Lock, X,
   Home, MapPin, Phone, MessageCircle
 } from 'lucide-react';
+
+const PUSH_BANNER_DISMISSED_KEY = 'crm_push_banner_dismissed';
 
 export default function App() {
   // Auth & Current Tenant User State
@@ -109,7 +112,19 @@ export default function App() {
   const [viewTaskModalOpen, setViewTaskModalOpen] = useState(false);
   const [selectedTaskDetails, setSelectedTaskDetails] = useState(null);
 
-  const handleLogout = () => {
+  // Web Push (background notifications) for this device
+  const [pushState, setPushState] = useState('unknown'); // unknown | unsupported | ios-needs-install | denied | off | on
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushBannerDismissed, setPushBannerDismissed] = useState(
+    () => localStorage.getItem(PUSH_BANNER_DISMISSED_KEY) === '1'
+  );
+  // Lead to open from a notification tap (?lead=<id>), kept until the user is logged in
+  const pendingLeadIdRef = useRef(new URLSearchParams(window.location.search).get('lead'));
+
+  const handleLogout = async () => {
+    // Stop this device receiving the user's alerts (shared phones). Capped so logout never hangs.
+    await Promise.race([unsubscribeOnLogout(), new Promise((r) => setTimeout(r, 5000))]);
+    setPushState('off');
     localStorage.removeItem('crm_token');
     localStorage.removeItem('crm_user');
     setCurrentUser(null);
@@ -216,14 +231,90 @@ export default function App() {
   useEffect(() => {
     if (currentUser) {
       loadCountsAndLookups();
-      // Request notification permission for push notifications
-      requestNotificationPermission().then(granted => {
-        if (granted) {
-          console.log('✅ Push notifications enabled');
-        }
-      });
     }
   }, [currentUser, loadCountsAndLookups]);
+
+  // Push state for this device. Permission is only requested from a tap (banner / bell), as iOS requires.
+  useEffect(() => {
+    if (!currentUser) return;
+    let cancelled = false;
+    getPushState().then((s) => { if (!cancelled) setPushState(s); });
+    return () => { cancelled = true; };
+  }, [currentUser]);
+
+  const openLeadFromNotification = useCallback((leadId) => {
+    if (!leadId) return;
+    setSelectedLeadId(leadId);
+    setViewLeadModalOpen(true);
+  }, []);
+
+  // Notification tap → open that lead (?lead=<id> on launch, or a message from the service worker if the app is open)
+  useEffect(() => {
+    if (!currentUser) return;
+    if (pendingLeadIdRef.current) {
+      openLeadFromNotification(pendingLeadIdRef.current);
+      pendingLeadIdRef.current = null;
+    }
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('lead')) {
+      params.delete('lead');
+      const qs = params.toString();
+      window.history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : '') + window.location.hash);
+    }
+    if (!('serviceWorker' in navigator)) return;
+    const onMessage = (event) => {
+      if (event.data?.type !== 'OPEN_URL') return;
+      try {
+        openLeadFromNotification(new URL(event.data.url).searchParams.get('lead'));
+      } catch { /* ignore malformed */ }
+    };
+    navigator.serviceWorker.addEventListener('message', onMessage);
+    return () => navigator.serviceWorker.removeEventListener('message', onMessage);
+  }, [currentUser, openLeadFromNotification]);
+
+  const handleEnablePush = async () => {
+    setPushBusy(true);
+    try {
+      const s = await enablePush();
+      setPushState(s);
+      if (s === 'denied') alert('Notifications are blocked for this app. Turn them on in your phone or browser settings, then try again.');
+    } catch (err) {
+      console.error('Enable push failed:', err);
+      alert('Could not turn on notifications: ' + (err?.response?.data?.message || err.message));
+      setPushState(await getPushState());
+    } finally {
+      setPushBusy(false);
+      setOpenMenuLeadId(null);
+    }
+  };
+
+  const handleDisablePush = async () => {
+    setPushBusy(true);
+    try {
+      setPushState(await disablePush());
+    } catch (err) {
+      console.error('Disable push failed:', err);
+      setPushState(await getPushState());
+    } finally {
+      setPushBusy(false);
+      setOpenMenuLeadId(null);
+    }
+  };
+
+  const handleTestPush = async () => {
+    setOpenMenuLeadId(null);
+    try {
+      const r = await crmApi.sendTestPush();
+      if (!r.success) alert('Test notification failed: ' + (r.error || 'unknown error'));
+    } catch (err) {
+      alert('Test notification failed: ' + (err?.response?.data?.message || err.message));
+    }
+  };
+
+  const dismissPushBanner = () => {
+    localStorage.setItem(PUSH_BANNER_DISMISSED_KEY, '1');
+    setPushBannerDismissed(true);
+  };
 
   // Close dropdown menu when clicking outside
   useEffect(() => {
@@ -758,6 +849,51 @@ export default function App() {
             <RefreshCw className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             <span className="hidden xl:inline">Refresh</span>
           </button>
+          {/* Notifications toggle for this device */}
+          <div className="relative action-menu-container">
+            <button
+              onClick={() => setOpenMenuLeadId(openMenuLeadId === 'push-menu' ? null : 'push-menu')}
+              aria-label="Notifications"
+              data-testid="push-bell"
+              className={`flex items-center gap-1 text-[10px] sm:text-xs px-2 sm:px-3 py-1.5 rounded border ${
+                pushState === 'on'
+                  ? 'bg-emerald-950 text-emerald-400 border-emerald-800'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+              }`}
+            >
+              {pushState === 'on'
+                ? <Bell className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-current" />
+                : <BellOff className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
+              <span className="hidden xl:inline">{pushState === 'on' ? 'Alerts On' : 'Alerts Off'}</span>
+            </button>
+            {openMenuLeadId === 'push-menu' && (
+              <div className="absolute right-0 top-9 w-64 bg-white text-slate-700 border border-slate-200 rounded-lg shadow-2xl p-3 z-[100] text-left text-xs space-y-2">
+                <div className="font-semibold text-slate-900">Notifications on this device</div>
+                {pushState === 'on' && (
+                  <>
+                    <p className="text-slate-500">On. You'll get lead alerts even when the app is closed.</p>
+                    <button onClick={handleTestPush} className="w-full px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200">Send test notification</button>
+                    <button onClick={handleDisablePush} disabled={pushBusy} className="w-full px-3 py-1.5 rounded bg-rose-50 text-rose-700 hover:bg-rose-100 disabled:opacity-50">Turn off</button>
+                  </>
+                )}
+                {pushState === 'off' && (
+                  <>
+                    <p className="text-slate-500">Get new lead, returning lead and transfer alerts even when the app is closed.</p>
+                    <button onClick={handleEnablePush} disabled={pushBusy} className="w-full px-3 py-1.5 rounded bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50">{pushBusy ? 'Turning on…' : 'Turn on'}</button>
+                  </>
+                )}
+                {pushState === 'denied' && (
+                  <p className="text-slate-500">Notifications are blocked. Allow them for this app in your phone or browser settings, then reopen the app.</p>
+                )}
+                {pushState === 'ios-needs-install' && (
+                  <p className="text-slate-500">On iPhone, tap Share → "Add to Home Screen", then open the app from its icon and turn alerts on there (iOS 16.4+).</p>
+                )}
+                {(pushState === 'unsupported' || pushState === 'unknown') && (
+                  <p className="text-slate-500">This browser doesn't support background notifications.</p>
+                )}
+              </div>
+            )}
+          </div>
           <button
             onClick={handleLogout}
             className="flex items-center gap-1 text-[10px] sm:text-xs bg-rose-950/80 hover:bg-rose-900 text-rose-300 px-2 sm:px-3 py-1.5 rounded border border-rose-800"
@@ -767,6 +903,29 @@ export default function App() {
           </button>
         </div>
       </header>
+
+      {/* One-time opt-in banner for background notifications */}
+      {!pushBannerDismissed && (pushState === 'off' || pushState === 'ios-needs-install') && (
+        <div data-testid="push-banner" className="mb-4 flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+          <Bell className="hidden sm:block w-5 h-5 flex-shrink-0 text-indigo-600" />
+          <div className="flex-1">
+            {pushState === 'off'
+              ? 'Turn on notifications to get new lead alerts even when the app is closed.'
+              : 'To get lead alerts on iPhone, tap Share → "Add to Home Screen", then open the app from its icon and turn on notifications.'}
+          </div>
+          <div className="flex gap-2">
+            {pushState === 'off' && (
+              <button onClick={async () => { await handleEnablePush(); dismissPushBanner(); }} disabled={pushBusy}
+                className="px-3 py-1.5 rounded bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-50">
+                {pushBusy ? 'Turning on…' : 'Enable'}
+              </button>
+            )}
+            <button onClick={dismissPushBanner} className="px-3 py-1.5 rounded bg-white border border-indigo-200 text-indigo-700 text-xs hover:bg-indigo-100">
+              Not now
+            </button>
+          </div>
+        </div>
+      )}
 
       <main className="space-y-4 sm:space-y-6">
         {activePage === 'crm' ? (

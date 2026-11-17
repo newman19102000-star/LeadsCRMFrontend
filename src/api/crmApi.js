@@ -27,6 +27,15 @@ export const crmApi = {
     api.put(`/auth/users/${id}/permissions`, payload).then(r => r.data),
   editUser: (id, payload) =>
     api.put(`/auth/users/${id}`, payload).then(r => r.data),
+  // Web Push (background notifications)
+  getPushPublicKey: () =>
+    api.get('/push/vapid-public-key').then(r => r.data),
+  subscribePush: (subscription) =>
+    api.post('/push/subscribe', subscription).then(r => r.data),
+  unsubscribePush: (endpoint) =>
+    api.post('/push/unsubscribe', { endpoint }, { timeout: 4000 }).then(r => r.data),
+  sendTestPush: () =>
+    api.post('/push/test').then(r => r.data),
   sendTestWhatsApp: (teamMemberId) =>
     api.post('/whatsapp/test', { teamMemberId }).then(r => r.data),
   deleteUser: (id) =>
