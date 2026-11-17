@@ -59,10 +59,13 @@ export async function enablePush() {
   const key = urlBase64ToUint8Array(publicKey);
 
   let sub = await reg.pushManager.getSubscription();
-  // If the server's key changed, the old subscription can't be used.
-  if (sub && sub.options?.applicationServerKey) {
-    const current = new Uint8Array(sub.options.applicationServerKey);
-    if (current.length !== key.length || current.some((b, i) => b !== key[i])) {
+  // A subscription made with a different server key is rejected by the push service (Apple: BadJwtToken).
+  // Reuse it only if we can confirm it uses the current key; otherwise start fresh.
+  if (sub) {
+    const existingKey = sub.options?.applicationServerKey ? new Uint8Array(sub.options.applicationServerKey) : null;
+    const sameKey = !!existingKey && existingKey.length === key.length && existingKey.every((b, i) => b === key[i]);
+    if (!sameKey) {
+      try { await crmApi.unsubscribePush(sub.endpoint); } catch { /* old row is pruned server-side anyway */ }
       await sub.unsubscribe();
       sub = null;
     }
@@ -148,15 +151,16 @@ export async function showLocalTestNotification() {
 export async function sendTestPushAndWait(timeoutMs = 20000) {
   const r = await crmApi.sendTestPush();
   if (!r.success) return { sent: false, received: false, error: r.error || 'The push service did not accept the message.' };
+  const partial = r.failed > 0 ? r.error : null; // e.g. "4 of 5 device(s) rejected: Apple: HTTP 403 BadJwtToken (…)"
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     await new Promise((res) => setTimeout(res, 1500));
     try {
       const s = await crmApi.getTestPushStatus(r.testId);
-      if (s.received) return { sent: true, received: true };
+      if (s.received) return { sent: true, received: true, partial };
     } catch {
       /* keep polling */
     }
   }
-  return { sent: true, received: false };
+  return { sent: true, received: false, partial };
 }

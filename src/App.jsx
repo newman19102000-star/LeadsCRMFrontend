@@ -323,6 +323,7 @@ export default function App() {
       const r = await sendTestPushAndWait();
       if (!r.sent) setPushTest({ tone: 'error', text: `Not sent: ${r.error}` });
       else if (r.received) setPushTest({ tone: 'ok', text: 'Delivered to this phone. If no notification appeared, the phone is hiding them: check Settings → Notifications for this app, and Focus mode.' });
+      else if (r.partial) setPushTest({ tone: 'error', text: `This phone did not receive it. ${r.partial}` });
       else setPushTest({ tone: 'warn', text: 'The push service accepted it, but this phone did not confirm receiving it. Fully close the app (swipe it away), reopen it from the home-screen icon, then tap Turn off and Turn on.' });
     } catch (err) {
       setPushTest({ tone: 'error', text: 'Test failed: ' + (err?.response?.data?.message || err.message) });
