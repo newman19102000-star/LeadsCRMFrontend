@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Phone, X } from 'lucide-react';
+import { Phone, X, ChevronDown } from 'lucide-react';
 import { crmApi } from '../api/crmApi';
 
 const OUTCOMES = ['Connected', 'No Answer', 'Busy', 'Switched Off', 'Wrong Number', 'Call Back Later'];
@@ -21,7 +21,15 @@ function defaultFollowUpTime() {
  * "How did the call go?" sheet. Everything except saving is optional:
  * the call itself is already recorded on the timeline when the worker tapped Call.
  */
-export default function CallLogSheet({ sheet, currentUserId, onClose, onSaved }) {
+const DETAIL_FIELDS = ['requirement', 'budget', 'subLocation', 'projectId'];
+const EMPTY_DETAILS = { stage: '', stageReason: '', requirement: '', budget: '', subLocation: '', projectId: '' };
+
+export default function CallLogSheet({ sheet, currentUserId, stages = [], projects = [], onClose, onSaved }) {
+  // Lead details (stage + key fields), prefilled from the lead; only changed values are saved
+  const [original, setOriginal] = useState(EMPTY_DETAILS);
+  const [details, setDetails] = useState(EMPTY_DETAILS);
+  const [detailsLoaded, setDetailsLoaded] = useState(false);
+  const [showMoreDetails, setShowMoreDetails] = useState(false);
   const [outcome, setOutcome] = useState('');
   const [minutes, setMinutes] = useState('');
   const [seconds, setSeconds] = useState('');
@@ -50,9 +58,31 @@ export default function CallLogSheet({ sheet, currentUserId, onClose, onSaved })
     setFollowUpWhen(defaultFollowUpTime());
     setFollowUpType('CALL');
     setLinkedTask(null);
+    const startDetails = { ...EMPTY_DETAILS, stage: sheet.leadStage || '' };
+    setOriginal(startDetails);
+    setDetails(startDetails);
+    setDetailsLoaded(false);
+    setShowMoreDetails(false);
+
+    let cancelled = false;
+    crmApi.getLeadDetails(sheet.leadId)
+      .then((lead) => {
+        if (cancelled || !lead) return;
+        const loaded = {
+          stage: lead.leadStage || '',
+          stageReason: lead.stageReason || '',
+          requirement: lead.requirement || '',
+          budget: lead.budget || '',
+          subLocation: lead.subLocation || '',
+          projectId: lead.projectId != null ? String(lead.projectId) : '',
+        };
+        setOriginal(loaded);
+        setDetails(loaded);
+        setDetailsLoaded(true);
+      })
+      .catch(() => { if (!cancelled) setDetailsLoaded(true); });
 
     // Find an open CALL task that is due today or overdue
-    let cancelled = false;
     crmApi.getLeadTasks(sheet.leadId)
       .then((tasks) => {
         if (cancelled) return;
@@ -74,6 +104,16 @@ export default function CallLogSheet({ sheet, currentUserId, onClose, onSaved })
   const durationInvalid = hasDuration && (Number.isNaN(totalSeconds) || totalSeconds < 0 || totalSeconds > MAX_SECONDS);
   const showEstimateTag = sheet.estimated && !durationEdited && hasDuration;
   const completeTask = !!linkedTask && (completeChoice ?? outcome === 'Connected');
+
+  const stageDef = stages.find((s) => s.stage === details.stage);
+  const stageReasons = stageDef?.allowedReasons || [];
+  const stageChanged = !!details.stage && (details.stage !== original.stage || details.stageReason !== original.stageReason);
+  const changedDetails = DETAIL_FIELDS.filter((f) => details[f] !== original[f]);
+  const setDetail = (field, value) => setDetails((d) => ({ ...d, [field]: value }));
+  // Stages in the catalog; keep the lead's current stage selectable even if it isn't in the list
+  const stageOptions = stages.some((s) => s.stage === original.stage) || !original.stage
+    ? stages.map((s) => s.stage)
+    : [original.stage, ...stages.map((s) => s.stage)];
 
   const save = async () => {
     if (!outcome || durationInvalid || saving) return;
@@ -97,6 +137,25 @@ export default function CallLogSheet({ sheet, currentUserId, onClose, onSaved })
       else await crmApi.logCall(sheet.leadId, payload);
 
       const problems = [];
+      if (changedDetails.length) {
+        try {
+          const patch = {};
+          changedDetails.forEach((f) => {
+            patch[f] = f === 'projectId' ? (details.projectId ? Number(details.projectId) : null) : details[f].trim();
+          });
+          await crmApi.editLead(sheet.leadId, patch);
+        } catch { problems.push('the lead details could not be updated'); }
+      }
+      if (stageChanged) {
+        try {
+          await crmApi.changeStage(sheet.leadId, {
+            stage: details.stage,
+            stageReason: details.stageReason || null,
+            agentId: currentUserId,
+            completeOpenTasks: false, // the checkbox below decides which task gets completed
+          });
+        } catch { problems.push('the stage could not be updated'); }
+      }
       if (completeTask) {
         try {
           await crmApi.completeTask(linkedTask.id, {
@@ -114,7 +173,7 @@ export default function CallLogSheet({ sheet, currentUserId, onClose, onSaved })
             title: followUpTitle.trim() || `Follow up with ${sheet.leadName}`,
             remark: '',
             activityType: followUpType,
-            stage: sheet.leadStage || 'New Lead',
+            stage: details.stage || sheet.leadStage || 'New Lead',
           });
         } catch { problems.push('the follow-up task could not be created'); }
       }
@@ -152,7 +211,106 @@ export default function CallLogSheet({ sheet, currentUserId, onClose, onSaved })
             {sheet.manual ? 'Log a call you made outside the CRM.' : 'This call is already recorded on the timeline. Add details if you like.'}
           </p>
 
-          <div>
+          {/* Lead details: stage + key fields */}
+          <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3 space-y-2" data-testid="call-lead-details">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-slate-700">Lead</span>
+              {!detailsLoaded && <span className="text-[10px] text-slate-400">Loading…</span>}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[10px] font-medium text-slate-500 mb-0.5">Stage</label>
+                <select
+                  value={details.stage}
+                  onChange={(e) => {
+                    const st = stages.find((s) => s.stage === e.target.value);
+                    setDetails((d) => ({
+                      ...d,
+                      stage: e.target.value,
+                      stageReason: e.target.value === original.stage ? original.stageReason : (st?.allowedReasons?.[0] || ''),
+                    }));
+                  }}
+                  className="w-full border border-slate-300 rounded px-2 py-1.5 bg-white"
+                >
+                  {!details.stage && <option value="">Select stage</option>}
+                  {stageOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-medium text-slate-500 mb-0.5">Reason</label>
+                <select
+                  value={details.stageReason}
+                  onChange={(e) => setDetail('stageReason', e.target.value)}
+                  disabled={stageReasons.length === 0 && !details.stageReason}
+                  className="w-full border border-slate-300 rounded px-2 py-1.5 bg-white disabled:bg-slate-100 disabled:text-slate-400"
+                >
+                  {(stageReasons.length === 0 || !stageReasons.includes(details.stageReason)) && (
+                    <option value={details.stageReason}>{details.stageReason || '—'}</option>
+                  )}
+                  {stageReasons.map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowMoreDetails((v) => !v)}
+              className="flex items-center gap-1 text-[11px] font-medium text-indigo-600"
+            >
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showMoreDetails ? 'rotate-180' : ''}`} />
+              {showMoreDetails ? 'Hide details' : 'More details'}
+              {changedDetails.length > 0 && !showMoreDetails && (
+                <span className="ml-1 px-1.5 rounded bg-indigo-100 text-indigo-700 text-[10px]">{changedDetails.length} edited</span>
+              )}
+            </button>
+
+            {showMoreDetails && (
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-[10px] font-medium text-slate-500 mb-0.5">Project</label>
+                  <select
+                    value={details.projectId}
+                    onChange={(e) => setDetail('projectId', e.target.value)}
+                    className="w-full border border-slate-300 rounded px-2 py-1.5 bg-white"
+                  >
+                    <option value="">Not set</option>
+                    {projects.map((p) => <option key={p.id} value={String(p.id)}>{p.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-medium text-slate-500 mb-0.5">Requirement</label>
+                  <input
+                    type="text" value={details.requirement} maxLength={500}
+                    onChange={(e) => setDetail('requirement', e.target.value)}
+                    placeholder="e.g. 2 BHK"
+                    className="w-full border border-slate-300 rounded px-2 py-1.5"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[10px] font-medium text-slate-500 mb-0.5">Budget</label>
+                    <input
+                      type="text" value={details.budget} maxLength={100}
+                      onChange={(e) => setDetail('budget', e.target.value)}
+                      placeholder="e.g. 1.2 Cr"
+                      className="w-full border border-slate-300 rounded px-2 py-1.5"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-slate-500 mb-0.5">Location</label>
+                    <input
+                      type="text" value={details.subLocation} maxLength={200}
+                      onChange={(e) => setDetail('subLocation', e.target.value)}
+                      placeholder="e.g. Thane West"
+                      className="w-full border border-slate-300 rounded px-2 py-1.5"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="border-t border-slate-100 pt-3">
             <label className="block text-[11px] font-semibold text-slate-600 mb-1.5">How did it go?</label>
             <div className="grid grid-cols-2 gap-1.5">
               {OUTCOMES.map((o) => (

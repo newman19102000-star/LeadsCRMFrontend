@@ -2304,6 +2304,8 @@ export default function App() {
       <CallLogSheet
         sheet={callSheet}
         currentUserId={currentUser?.id}
+        stages={lookups.stages || []}
+        projects={lookups.projects || []}
         onClose={closeCallSheet}
         onSaved={() => refreshAll()}
       />
