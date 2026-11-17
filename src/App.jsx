@@ -15,7 +15,7 @@ import {
   Users, CheckSquare, Search, RefreshCw, MoreVertical,
   Calendar, Building2, UserPlus, ArrowRightLeft, Trash2, Edit3,
   Eye, Bell, Wifi, Layers, Plus, Link2, ShieldCheck, LogOut, Lock, X,
-  Home, MapPin, Phone
+  Home, MapPin, Phone, MessageCircle
 } from 'lucide-react';
 
 export default function App() {
@@ -1748,6 +1748,25 @@ export default function App() {
                                   >
                                     <Edit3 className="w-3.5 h-3.5 text-slate-500" /> Edit Details
                                   </button>
+                                  {/* Test WhatsApp alert */}
+                                  {u.phone && (
+                                    <button
+                                      onClick={async () => {
+                                        setOpenMenuLeadId(null);
+                                        try {
+                                          const r = await crmApi.sendTestWhatsApp(u.id);
+                                          alert(r.success
+                                            ? `Test WhatsApp sent to ${r.name} (${r.sentTo}).`
+                                            : `Test WhatsApp failed: ${r.error}`);
+                                        } catch (e) {
+                                          alert('Test WhatsApp failed: ' + (e?.response?.data?.message || e.message));
+                                        }
+                                      }}
+                                      className="w-full px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs text-slate-700"
+                                    >
+                                      <MessageCircle className="w-3.5 h-3.5 text-emerald-600" /> Send test WhatsApp
+                                    </button>
+                                  )}
                                   {/* Toggle visibility */}
                                   {u.accessRole !== 'CompanyAdmin' && (
                                     <button

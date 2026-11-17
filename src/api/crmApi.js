@@ -27,6 +27,8 @@ export const crmApi = {
     api.put(`/auth/users/${id}/permissions`, payload).then(r => r.data),
   editUser: (id, payload) =>
     api.put(`/auth/users/${id}`, payload).then(r => r.data),
+  sendTestWhatsApp: (teamMemberId) =>
+    api.post('/whatsapp/test', { teamMemberId }).then(r => r.data),
   deleteUser: (id) =>
     api.delete(`/auth/users/${id}`).then(r => r.data),
   markUserAbsent: (id, clear = false) =>

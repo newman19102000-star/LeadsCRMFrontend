@@ -91,7 +91,12 @@ export default function CrmDashboard({ onOpenStage, onOpenTasks }) {
     <div className="px-3 sm:px-6 py-4 sm:py-6 space-y-5 max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">CRM</h1>
+         <div className="flex items-center w-full">
+  <h1 className="text-xl font-bold text-slate-900 !text-black mr-auto">
+    CRM
+  </h1>
+  {/* Other navbar items will be pushed to the right */}
+</div>
           <p className="text-xs text-slate-500 mt-0.5">Tap a tile or stage to open the matching list</p>
         </div>
         <button
@@ -106,7 +111,7 @@ export default function CrmDashboard({ onOpenStage, onOpenTasks }) {
       {/* Tasks: what needs action */}
       <section>
         <div className="flex items-baseline justify-between mb-2">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">Tasks</h2>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 !text-black">Tasks</h2>
           <span className="text-[11px] text-slate-400">{tasks.total} total</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -130,7 +135,7 @@ export default function CrmDashboard({ onOpenStage, onOpenTasks }) {
       <section className="bg-white rounded-xl border border-slate-200 shadow-sm">
         <div className="px-4 pt-4 pb-3">
           <div className="flex items-baseline justify-between mb-2">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">Leads</h2>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 !text-black">Leads</h2>
             <span className="text-[11px] text-slate-400">
               {totalLeads} total · {summary.freshUntouched || 0} untouched
             </span>
