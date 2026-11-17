@@ -110,3 +110,53 @@ export async function unsubscribeOnLogout() {
     console.warn('Push unsubscribe on logout failed:', err);
   }
 }
+
+// ───────────────────────────── Diagnostics (bell menu) ─────────────────────────────
+
+// Returns the push handler version of the active service worker, or null if it doesn't answer
+// (an old service worker without push support is still in control → close and reopen the app).
+export async function getServiceWorkerPushVersion() {
+  try {
+    if (!('serviceWorker' in navigator)) return null;
+    const reg = await getRegistration();
+    const worker = reg.active;
+    if (!worker) return null;
+    return await new Promise((resolve) => {
+      const channel = new MessageChannel();
+      const timer = setTimeout(() => resolve(null), 2000);
+      channel.port1.onmessage = (e) => { clearTimeout(timer); resolve(e.data?.version ?? null); };
+      worker.postMessage({ type: 'PUSH_SW_PING' }, [channel.port2]);
+    });
+  } catch {
+    return null;
+  }
+}
+
+// Shows a notification directly on this device, without the push service. If this doesn't appear,
+// the phone is hiding the app's notifications (settings / Focus), not a delivery problem.
+export async function showLocalTestNotification() {
+  const reg = await getRegistration();
+  await reg.showNotification('🔔 Local test', {
+    body: 'If you can see this, the phone shows notifications from this app.',
+    tag: `crm-local-${Date.now()}`,
+    icon: '/pwa-192x192.png',
+  });
+}
+
+// Sends a test push and waits for the phone to confirm it arrived.
+// Returns { sent, received, error }.
+export async function sendTestPushAndWait(timeoutMs = 20000) {
+  const r = await crmApi.sendTestPush();
+  if (!r.success) return { sent: false, received: false, error: r.error || 'The push service did not accept the message.' };
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    await new Promise((res) => setTimeout(res, 1500));
+    try {
+      const s = await crmApi.getTestPushStatus(r.testId);
+      if (s.received) return { sent: true, received: true };
+    } catch {
+      /* keep polling */
+    }
+  }
+  return { sent: true, received: false };
+}

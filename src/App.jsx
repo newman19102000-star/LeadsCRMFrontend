@@ -12,7 +12,10 @@ import CallLogSheet from './components/CallLogSheet';
 import LeadExportModal from './components/LeadExportModal';
 import { useCallFlow } from './hooks/useCallFlow';
 import { showLeadNotification } from './utils/notifications';
-import { getPushState, enablePush, disablePush, unsubscribeOnLogout } from './utils/push';
+import {
+  getPushState, enablePush, disablePush, unsubscribeOnLogout,
+  getServiceWorkerPushVersion, showLocalTestNotification, sendTestPushAndWait,
+} from './utils/push';
 import {
   Users, CheckSquare, Search, RefreshCw, MoreVertical,
   Calendar, Building2, UserPlus, ArrowRightLeft, Trash2, Edit3,
@@ -303,13 +306,35 @@ export default function App() {
     }
   };
 
+  // Bell-menu diagnostics: is the current push code running, and does a test push reach this phone?
+  const [pushSwVersion, setPushSwVersion] = useState(undefined); // undefined = not checked, null = no answer
+  const [pushTest, setPushTest] = useState(null); // { tone: 'info'|'ok'|'warn'|'error', text }
+
+  useEffect(() => {
+    if (openMenuLeadId !== 'push-menu' || pushState !== 'on') return;
+    let cancelled = false;
+    getServiceWorkerPushVersion().then((v) => { if (!cancelled) setPushSwVersion(v); });
+    return () => { cancelled = true; };
+  }, [openMenuLeadId, pushState]);
+
   const handleTestPush = async () => {
-    setOpenMenuLeadId(null);
+    setPushTest({ tone: 'info', text: 'Sending… keep the app open for a few seconds.' });
     try {
-      const r = await crmApi.sendTestPush();
-      if (!r.success) alert('Test notification failed: ' + (r.error || 'unknown error'));
+      const r = await sendTestPushAndWait();
+      if (!r.sent) setPushTest({ tone: 'error', text: `Not sent: ${r.error}` });
+      else if (r.received) setPushTest({ tone: 'ok', text: 'Delivered to this phone. If no notification appeared, the phone is hiding them: check Settings → Notifications for this app, and Focus mode.' });
+      else setPushTest({ tone: 'warn', text: 'The push service accepted it, but this phone did not confirm receiving it. Fully close the app (swipe it away), reopen it from the home-screen icon, then tap Turn off and Turn on.' });
     } catch (err) {
-      alert('Test notification failed: ' + (err?.response?.data?.message || err.message));
+      setPushTest({ tone: 'error', text: 'Test failed: ' + (err?.response?.data?.message || err.message) });
+    }
+  };
+
+  const handleLocalTest = async () => {
+    try {
+      await showLocalTestNotification();
+      setPushTest({ tone: 'info', text: 'Local notification shown. If you saw nothing, notifications for this app are hidden in the phone settings.' });
+    } catch (err) {
+      setPushTest({ tone: 'error', text: 'Could not show a notification: ' + err.message });
     }
   };
 
@@ -874,7 +899,18 @@ export default function App() {
                 {pushState === 'on' && (
                   <>
                     <p className="text-slate-500">On. You'll get lead alerts even when the app is closed.</p>
-                    <button onClick={handleTestPush} className="w-full px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200">Send test notification</button>
+                    {pushSwVersion === null && (
+                      <p className="text-amber-700 bg-amber-50 rounded px-2 py-1.5" data-testid="push-sw-outdated">
+                        This phone is running an older version of the app. Fully close the app (swipe it away) and reopen it.
+                      </p>
+                    )}
+                    <button onClick={handleTestPush} disabled={pushTest?.tone === 'info' && pushTest.text.startsWith('Sending')} className="w-full px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200 disabled:opacity-50">Send test notification</button>
+                    <button onClick={handleLocalTest} className="w-full px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200">Show local notification</button>
+                    {pushTest && (
+                      <p data-testid="push-test-result" className={`rounded px-2 py-1.5 ${
+                        { ok: 'bg-emerald-50 text-emerald-800', warn: 'bg-amber-50 text-amber-800', error: 'bg-rose-50 text-rose-700', info: 'bg-slate-50 text-slate-600' }[pushTest.tone]
+                      }`}>{pushTest.text}</p>
+                    )}
                     <button onClick={handleDisablePush} disabled={pushBusy} className="w-full px-3 py-1.5 rounded bg-rose-50 text-rose-700 hover:bg-rose-100 disabled:opacity-50">Turn off</button>
                   </>
                 )}

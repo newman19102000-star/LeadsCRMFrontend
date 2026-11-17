@@ -36,6 +36,8 @@ export const crmApi = {
     api.post('/push/unsubscribe', { endpoint }, { timeout: 4000 }).then(r => r.data),
   sendTestPush: () =>
     api.post('/push/test').then(r => r.data),
+  getTestPushStatus: (testId) =>
+    api.get(`/push/test/${testId}`).then(r => r.data),
   // Admin: Excel export of leads created between two dates (yyyy-MM-dd, inclusive)
   exportLeads: (from, to) =>
     api.get('/reports/leads-export', { params: { from, to }, responseType: 'blob', timeout: 120000 }).then(r => {
