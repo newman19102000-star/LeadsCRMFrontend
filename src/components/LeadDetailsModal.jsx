@@ -72,16 +72,16 @@ const LeadDetailsModal = ({ leadId, isOpen, onClose, onNavigateToTask }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 sm:p-6">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[85dvh] sm:max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b flex-shrink-0">
           <div className="flex items-center gap-3">
             <User className="w-6 h-6 text-blue-600" />
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">
-                {lead?.name || 'Lead Details'}
-              </h2>
+              <h2 className="mr-auto text-left text-2xl font-bold !text-black">
+  {lead?.name || 'Lead Details'}
+</h2>
               {lead && (
                 <div className="flex items-center gap-2 mt-1">
                   <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStageColor(lead.leadStage)}`}>
@@ -102,8 +102,8 @@ const LeadDetailsModal = ({ leadId, isOpen, onClose, onNavigateToTask }) => {
         </div>
 
         {/* Tabs */}
-        <div className="border-b px-6">
-          <div className="flex gap-6">
+        <div className="border-b flex-shrink-0 px-3 sm:px-6 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex gap-4 sm:gap-6 w-max min-w-full pt-2 pb-1">
             {[
               { id: 'overview', label: 'Overview', icon: User },
               { id: 'form-data', label: 'Form Data', icon: FileText },
@@ -114,7 +114,7 @@ const LeadDetailsModal = ({ leadId, isOpen, onClose, onNavigateToTask }) => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 py-3 px-2 border-b-2 transition-colors ${
+                className={`flex items-center gap-2 py-3 px-2 border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
                   activeTab === tab.id
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-gray-600 hover:text-gray-800'
@@ -128,7 +128,7 @@ const LeadDetailsModal = ({ leadId, isOpen, onClose, onNavigateToTask }) => {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6">
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
