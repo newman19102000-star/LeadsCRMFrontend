@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { crmApi } from './api/crmApi';
 import { useCrmRealtime } from './hooks/useCrmRealtime';
 import LeadDetailsModal from './components/LeadDetailsModal';
@@ -11,6 +11,13 @@ import ScrollNav from './components/ScrollNav';
 import CallLogSheet from './components/CallLogSheet';
 import LeadExportModal from './components/LeadExportModal';
 import WhatsAppButton from './components/WhatsAppButton';
+import FilterPanel from './components/filters/FilterPanel';
+import FilterChips from './components/filters/FilterChips';
+import {
+  LEAD_FIELDS, LEAD_DATE_FIELDS, LEAD_SORTS, TASK_FIELDS, TASK_DATE_FIELDS,
+  EMPTY_LEAD_FILTERS, EMPTY_TASK_FILTERS, countActive, toQueryParams,
+} from './components/filters/filterConfig';
+import { useSavedFilters } from './hooks/useSavedFilters';
 import { useCallFlow } from './hooks/useCallFlow';
 import { showLeadNotification } from './utils/notifications';
 import {
@@ -21,7 +28,7 @@ import {
   Users, CheckSquare, Search, RefreshCw, MoreVertical,
   Calendar, Building2, UserPlus, ArrowRightLeft, Trash2, Edit3,
   Eye, Bell, BellOff, Wifi, Layers, Plus, Link2, ShieldCheck, LogOut, Lock, X,
-  Home, MapPin, Phone, MessageCircle, Download
+  Home, MapPin, Phone, MessageCircle, Download, SlidersHorizontal
 } from 'lucide-react';
 
 const PUSH_BANNER_DISMISSED_KEY = 'crm_push_banner_dismissed';
@@ -43,6 +50,22 @@ export default function App() {
   });
 
   const isAdmin = currentUser?.accessRole === 'CompanyAdmin' || currentUser?.accessRole === 'SuperAdmin';
+  const canViewAll = isAdmin || !!currentUser?.canViewAllCompanyLeads;
+
+  // Leads / Tasks filters (remembered per user on this device). People filters only for users who see others' records.
+  const leadFields = useMemo(() => LEAD_FIELDS.filter((f) => !f.people || canViewAll), [canViewAll]);
+  const taskFields = useMemo(() => TASK_FIELDS.filter((f) => !f.people || canViewAll), [canViewAll]);
+  const [leadFilters, setLeadFilters, clearLeadFilters] = useSavedFilters(currentUser?.id, 'leads', LEAD_FIELDS, EMPTY_LEAD_FILTERS);
+  const [taskFilters, setTaskFilters, clearTaskFilters] = useSavedFilters(currentUser?.id, 'tasks', TASK_FIELDS, EMPTY_TASK_FILTERS);
+  const leadParamsKey = JSON.stringify(toQueryParams(leadFilters, leadFields));
+  const taskParamsKey = JSON.stringify(toQueryParams(taskFilters, taskFields));
+  const leadFilterParams = useMemo(() => JSON.parse(leadParamsKey), [leadParamsKey]);
+  const taskFilterParams = useMemo(() => JSON.parse(taskParamsKey), [taskParamsKey]);
+  const [leadFilterOptions, setLeadFilterOptions] = useState(null);
+  const [taskFilterOptions, setTaskFilterOptions] = useState(null);
+  const [loadingFilterOptions, setLoadingFilterOptions] = useState(false);
+  const [filterPanel, setFilterPanel] = useState(null); // 'leads' | 'tasks' | null
+  const [taskSearchInput, setTaskSearchInput] = useState(taskFilters.search || '');
 
   const [activePage, setActivePage] = useState('crm'); // 'crm' | 'leads' | 'tasks' | 'campaigns' | 'team' | 'projects'
   const [projects, setProjects] = useState([]);
@@ -141,40 +164,66 @@ export default function App() {
   const loadCountsAndLookups = useCallback(async () => {
     if (!currentUser) return;
     try {
-      const [c, l] = await Promise.all([crmApi.getDashboardCounts(), crmApi.getLookups()]);
+      // Bucket counts follow the active Leads filters
+      const [c, l] = await Promise.all([crmApi.getDashboardCounts(leadFilterParams), crmApi.getLookups()]);
       setCounts(c);
       setLookups(l);
     } catch (err) {
       if (err.response?.status === 401) handleLogout();
       console.error('Failed loading counts/lookups:', err);
     }
-  }, [currentUser]);
+  }, [currentUser, leadFilterParams]);
 
   const loadLeads = useCallback(async (tab = activeLeadTab, search = searchQuery, page = currentLeadPage) => {
     if (!currentUser) return;
     setLoadingLeads(true);
     try {
-      const res = await crmApi.getLeads(tab, search, page);
+      const res = await crmApi.getLeads(tab, search, page, leadFilterParams);
       setLeadsData(res);
     } catch (err) {
       console.error('Failed loading leads:', err);
+      if (err.response?.status === 400) {
+        // A saved filter the server no longer accepts: drop it rather than leave the page empty
+        alert('Some saved filters were invalid and have been cleared: ' + (err.response.data?.message || ''));
+        clearLeadFilters();
+      }
     } finally {
       setLoadingLeads(false);
     }
-  }, [currentUser, activeLeadTab, searchQuery, currentLeadPage]);
+  }, [currentUser, activeLeadTab, searchQuery, currentLeadPage, leadFilterParams, clearLeadFilters]);
 
   const loadTasks = useCallback(async (tab = activeTaskTab, page = currentTaskPage) => {
     if (!currentUser) return;
     setLoadingTasks(true);
     try {
-      const res = await crmApi.getTasks(tab, page);
+      const res = await crmApi.getTasks(tab, page, taskFilterParams);
       setTasksData(res);
     } catch (err) {
       console.error('Failed loading tasks:', err);
+      if (err.response?.status === 400) {
+        alert('Some saved filters were invalid and have been cleared: ' + (err.response.data?.message || ''));
+        clearTaskFilters();
+      }
     } finally {
       setLoadingTasks(false);
     }
-  }, [currentUser, activeTaskTab, currentTaskPage]);
+  }, [currentUser, activeTaskTab, currentTaskPage, taskFilterParams, clearTaskFilters]);
+
+  // Dropdown values for the filter panels (only what this user can see)
+  const fetchFilterOptions = useCallback(async (which) => {
+    try {
+      if (which === 'leads') setLeadFilterOptions(await crmApi.getLeadFilterOptions());
+      else setTaskFilterOptions(await crmApi.getTaskFilterOptions());
+    } catch (err) {
+      console.error('Failed loading filter options:', err);
+    }
+  }, []);
+  // With a loading indicator (used when a panel opens)
+  const loadFilterOptions = useCallback(async (which) => {
+    setLoadingFilterOptions(true);
+    await fetchFilterOptions(which);
+    setLoadingFilterOptions(false);
+  }, [fetchFilterOptions]);
 
   const loadCampaignsAndPages = useCallback(async () => {
     if (!currentUser) return;
@@ -368,14 +417,35 @@ export default function App() {
     else if (activePage === 'projects') loadProjects();
   }, [currentUser, activePage, activeLeadTab, activeTaskTab, currentLeadPage, currentTaskPage, currentTeamPage, loadLeads, loadTasks, loadCampaignsAndPages, loadCompanyUsers, loadProjects]);
 
-  // Reset to page 1 when changing tabs or search
+  // Reset to page 1 when changing tabs, search or filters
   useEffect(() => {
     setCurrentLeadPage(1);
-  }, [activeLeadTab, searchQuery]);
+  }, [activeLeadTab, searchQuery, leadParamsKey]);
 
   useEffect(() => {
     setCurrentTaskPage(1);
-  }, [activeTaskTab]);
+  }, [activeTaskTab, taskParamsKey]);
+
+  // Chip labels (names for ids) need the options; preload them quietly once per page
+  useEffect(() => {
+    if (!currentUser) return;
+    const failed = (err) => console.error('Failed loading filter options:', err);
+    if (activePage === 'leads' && !leadFilterOptions) crmApi.getLeadFilterOptions().then(setLeadFilterOptions).catch(failed);
+    if (activePage === 'tasks' && !taskFilterOptions) crmApi.getTaskFilterOptions().then(setTaskFilterOptions).catch(failed);
+  }, [activePage, currentUser, leadFilterOptions, taskFilterOptions]);
+
+  // Task search: applied shortly after typing stops
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setTaskFilters((f) => (f.search === taskSearchInput ? f : { ...f, search: taskSearchInput }));
+    }, 400);
+    return () => clearTimeout(t);
+  }, [taskSearchInput, setTaskFilters]);
+
+  const openFilterPanel = (which) => {
+    setFilterPanel(which);
+    loadFilterOptions(which); // refresh so new values show up
+  };
 
   const refreshAll = () => {
     loadCountsAndLookups();
@@ -972,9 +1042,11 @@ export default function App() {
           <ErrorBoundary>
             <CrmDashboard
               onOpenStage={(stage) => {
+                // Start from clean filters so saved ones don't hide the stage's leads
                 setSearchQuery('');
                 setCurrentLeadPage(1);
-                setActiveLeadTab(`stage:${stage}`);
+                setLeadFilters({ ...EMPTY_LEAD_FILTERS, stage: [stage] });
+                setActiveLeadTab('all_total');
                 setActivePage('leads');
               }}
               onOpenTasks={(tab) => {
@@ -1060,7 +1132,7 @@ export default function App() {
                     <button onClick={() => setActiveLeadTab('all_total')} className="ml-2 text-[11px] text-slate-500 underline normal-case">clear</button>
                   )}
                 </span>
-                <span className="text-xs bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full font-medium">
+                <span className="text-xs bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full font-medium" data-testid="leads-record-count">
                   {leadsData.totalCount || 0} records
                 </span>
               </div>
@@ -1069,13 +1141,37 @@ export default function App() {
                   e.preventDefault();
                   loadLeads(activeLeadTab, searchQuery);
                 }}
-                className="flex items-center gap-2 w-full sm:w-auto"
+                className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto"
               >
-                <div className="relative flex-1 sm:flex-initial">
+                <button
+                  type="button"
+                  onClick={() => openFilterPanel('leads')}
+                  data-testid="lead-filters-button"
+                  className={`text-sm px-3 py-1.5 rounded-md border flex items-center gap-1.5 whitespace-nowrap ${
+                    countActive(leadFilters, leadFields) ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <SlidersHorizontal className="w-4 h-4" /> Filters
+                  {countActive(leadFilters, leadFields) > 0 && (
+                    <span className="ml-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">
+                      {countActive(leadFilters, leadFields)}
+                    </span>
+                  )}
+                </button>
+                <select
+                  value={leadFilters.sort}
+                  onChange={(e) => setLeadFilters({ ...leadFilters, sort: e.target.value })}
+                  aria-label="Sort leads"
+                  data-testid="lead-sort"
+                  className="text-sm border border-slate-300 rounded-md px-2 py-1.5 bg-white flex-1 min-w-[120px] sm:flex-initial"
+                >
+                  {LEAD_SORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+                <div className="relative basis-full sm:basis-auto sm:flex-initial">
                   <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                   <input
                     type="text"
-                    placeholder="Search name or mobile..."
+                    placeholder="Name, mobile, email or LD-…"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-9 pr-3 py-1.5 text-sm border border-slate-300 rounded-md focus:outline-none focus:border-indigo-500"
@@ -1106,6 +1202,14 @@ export default function App() {
                 )}
               </form>
             </div>
+            <FilterChips
+              filters={leadFilters}
+              fields={leadFields}
+              options={leadFilterOptions}
+              dateFields={LEAD_DATE_FIELDS}
+              onChange={setLeadFilters}
+              onClear={clearLeadFilters}
+            />
 
             {/* 22-COLUMN LEADS TABLE */}
             {/* Mobile cards — hidden on sm+ */}
@@ -1358,6 +1462,51 @@ export default function App() {
                   <div className="text-[9px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 mt-0.5 sm:mt-1 line-clamp-2 leading-tight">{t.label}</div>
                 </button>
               ))}
+            </div>
+
+            {/* Task search & filters */}
+            <div className="space-y-2">
+              <div className="bg-white rounded-lg border border-slate-200 px-3 sm:px-4 py-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+                <span className="text-xs bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full font-medium self-start sm:self-auto" data-testid="tasks-record-count">
+                  {tasksData.totalCount || 0} tasks
+                </span>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => openFilterPanel('tasks')}
+                    data-testid="task-filters-button"
+                    className={`text-sm px-3 py-1.5 rounded-md border flex items-center gap-1.5 whitespace-nowrap ${
+                      countActive(taskFilters, taskFields) ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    <SlidersHorizontal className="w-4 h-4" /> Filters
+                    {countActive(taskFilters, taskFields) > 0 && (
+                      <span className="ml-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">
+                        {countActive(taskFilters, taskFields)}
+                      </span>
+                    )}
+                  </button>
+                  <div className="relative flex-1 sm:w-72">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                    <input
+                      type="text"
+                      value={taskSearchInput}
+                      onChange={(e) => setTaskSearchInput(e.target.value)}
+                      placeholder="Lead, mobile, LD-… or task title"
+                      data-testid="task-search"
+                      className="w-full pl-9 pr-3 py-1.5 text-sm border border-slate-300 rounded-md focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+              </div>
+              <FilterChips
+                filters={taskFilters}
+                fields={taskFields}
+                options={taskFilterOptions}
+                dateFields={TASK_DATE_FIELDS}
+                onChange={setTaskFilters}
+                onClear={() => { clearTaskFilters(); setTaskSearchInput(''); }}
+              />
             </div>
 
             {/* Mobile task cards — hidden on sm+ */}
@@ -2366,7 +2515,43 @@ export default function App() {
         onSaved={() => refreshAll()}
       />
 
-      {isAdmin && showExportModal && <LeadExportModal onClose={() => setShowExportModal(false)} />}
+      {isAdmin && showExportModal && (
+        <LeadExportModal
+          onClose={() => setShowExportModal(false)}
+          currentFilters={leadFilters}
+          fields={leadFields}
+          options={leadFilterOptions}
+          loadingOptions={loadingFilterOptions}
+          onNeedOptions={() => loadFilterOptions('leads')}
+        />
+      )}
+
+      <FilterPanel
+        open={filterPanel === 'leads'}
+        title="Filter leads"
+        fields={leadFields}
+        options={leadFilterOptions}
+        loadingOptions={loadingFilterOptions}
+        value={leadFilters}
+        empty={EMPTY_LEAD_FILTERS}
+        dateFields={LEAD_DATE_FIELDS}
+        showInactive
+        onApply={setLeadFilters}
+        onClose={() => setFilterPanel(null)}
+      />
+      <FilterPanel
+        open={filterPanel === 'tasks'}
+        title="Filter tasks"
+        fields={taskFields}
+        options={taskFilterOptions}
+        loadingOptions={loadingFilterOptions}
+        value={taskFilters}
+        empty={EMPTY_TASK_FILTERS}
+        dateFields={TASK_DATE_FIELDS}
+        datePresets={['today', 'yesterday', 'next7', 'last7', 'last30', 'thisMonth']}
+        onApply={(f) => setTaskFilters({ ...f, search: taskSearchInput })} // the search box stays the source of truth
+        onClose={() => setFilterPanel(null)}
+      />
 
       {/* ADD LEAD MANUALLY MODAL */}
       {showAddLeadModal && (

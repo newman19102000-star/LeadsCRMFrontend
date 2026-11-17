@@ -2,6 +2,8 @@ import axios from 'axios';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5260/api',
+  // Lists go out as repeated keys (stage=A&stage=B), which is what ASP.NET binds to List<string>
+  paramsSerializer: { indexes: null },
 });
 
 // Automatically attach JWT token to every outgoing request
@@ -39,8 +41,8 @@ export const crmApi = {
   getTestPushStatus: (testId) =>
     api.get(`/push/test/${testId}`).then(r => r.data),
   // Admin: Excel export of leads created between two dates (yyyy-MM-dd, inclusive)
-  exportLeads: (from, to) =>
-    api.get('/reports/leads-export', { params: { from, to }, responseType: 'blob', timeout: 120000 }).then(r => {
+  exportLeads: (from, to, filterParams = {}) =>
+    api.get('/reports/leads-export', { params: { ...filterParams, from, to }, responseType: 'blob', timeout: 120000 }).then(r => {
       const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(r.headers['content-disposition'] || '');
       return { blob: r.data, fileName: match ? decodeURIComponent(match[1]) : `Leads_${from}_to_${to}.xlsx` };
     }),
@@ -71,10 +73,12 @@ export const crmApi = {
   getCrmDashboard: () => api.get('/analytics/crm-dashboard').then(r => r.data),
 
   // Leads Workspace APIs
-  getDashboardCounts: () => api.get('/leads/dashboard-counts').then(r => r.data),
+  getDashboardCounts: (filterParams = {}) => api.get('/leads/dashboard-counts', { params: filterParams }).then(r => r.data),
+  getLeadFilterOptions: () => api.get('/leads/filter-options').then(r => r.data),
+  getTaskFilterOptions: () => api.get('/tasks/filter-options').then(r => r.data),
   getLookups: () => api.get('/leads/lookups').then(r => r.data),
-  getLeads: (tab = 'all_total', search = '', page = 1) =>
-    api.get('/leads', { params: { tab, search, page } }).then(r => r.data),
+  getLeads: (tab = 'all_total', search = '', page = 1, filterParams = {}) =>
+    api.get('/leads', { params: { ...filterParams, tab, search: search || undefined, page } }).then(r => r.data),
   getLeadDetails: (id) => api.get(`/leads/${id}`).then(r => r.data),
   addTask: (id, payload) => api.post(`/leads/${id}/tasks`, payload).then(r => r.data),
   changeStage: (id, payload) => api.post(`/leads/${id}/stage`, payload).then(r => r.data),
@@ -91,8 +95,8 @@ export const crmApi = {
   deleteLead: (id) => api.delete(`/leads/${id}`).then(r => r.data),
 
   // Tasks Page APIs
-  getTasks: (tab = 'today', page = 1) =>
-    api.get('/tasks', { params: { tab, page } }).then(r => r.data),
+  getTasks: (tab = 'today', page = 1, filterParams = {}) =>
+    api.get('/tasks', { params: { ...filterParams, tab, page } }).then(r => r.data),
   getTask: (taskId) =>
     api.get(`/tasks/${taskId}`).then(r => r.data),
   getLeadTasks: (leadId) =>
