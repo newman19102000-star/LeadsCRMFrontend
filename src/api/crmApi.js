@@ -36,6 +36,12 @@ export const crmApi = {
     api.post('/push/unsubscribe', { endpoint }, { timeout: 4000 }).then(r => r.data),
   sendTestPush: () =>
     api.post('/push/test').then(r => r.data),
+  // Admin: Excel export of leads created between two dates (yyyy-MM-dd, inclusive)
+  exportLeads: (from, to) =>
+    api.get('/reports/leads-export', { params: { from, to }, responseType: 'blob', timeout: 120000 }).then(r => {
+      const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(r.headers['content-disposition'] || '');
+      return { blob: r.data, fileName: match ? decodeURIComponent(match[1]) : `Leads_${from}_to_${to}.xlsx` };
+    }),
   sendTestWhatsApp: (teamMemberId) =>
     api.post('/whatsapp/test', { teamMemberId }).then(r => r.data),
   deleteUser: (id) =>

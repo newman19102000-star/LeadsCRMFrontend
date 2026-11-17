@@ -9,6 +9,7 @@ import CrmDashboard from './components/CrmDashboard';
 import ErrorBoundary from './components/ErrorBoundary';
 import ScrollNav from './components/ScrollNav';
 import CallLogSheet from './components/CallLogSheet';
+import LeadExportModal from './components/LeadExportModal';
 import { useCallFlow } from './hooks/useCallFlow';
 import { showLeadNotification } from './utils/notifications';
 import { getPushState, enablePush, disablePush, unsubscribeOnLogout } from './utils/push';
@@ -16,7 +17,7 @@ import {
   Users, CheckSquare, Search, RefreshCw, MoreVertical,
   Calendar, Building2, UserPlus, ArrowRightLeft, Trash2, Edit3,
   Eye, Bell, BellOff, Wifi, Layers, Plus, Link2, ShieldCheck, LogOut, Lock, X,
-  Home, MapPin, Phone, MessageCircle
+  Home, MapPin, Phone, MessageCircle, Download
 } from 'lucide-react';
 
 const PUSH_BANNER_DISMISSED_KEY = 'crm_push_banner_dismissed';
@@ -43,6 +44,7 @@ export default function App() {
   const [projects, setProjects] = useState([]);
   const [editingProject, setEditingProject] = useState(null); // null = closed, {} = new, {id,...} = edit
   const [showAddLeadModal, setShowAddLeadModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [addLeadForm, setAddLeadForm] = useState({
     name: '', primaryNo: '', email: '', requirement: '', subLocation: '',
     budget: '', remark: '', ethnicity: '', tags: '', formName: '', projectId: ''
@@ -1054,6 +1056,16 @@ export default function App() {
                 >
                   <Plus className="w-4 h-4" /> Add Lead
                 </button>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => setShowExportModal(true)}
+                    className="bg-slate-800 hover:bg-slate-700 text-white text-sm px-3 py-1.5 rounded-md flex items-center gap-1.5 whitespace-nowrap"
+                    data-testid="export-leads-button"
+                  >
+                    <Download className="w-4 h-4" /> <span className="hidden sm:inline">Export</span>
+                  </button>
+                )}
               </form>
             </div>
 
@@ -2309,6 +2321,8 @@ export default function App() {
         onClose={closeCallSheet}
         onSaved={() => refreshAll()}
       />
+
+      {isAdmin && showExportModal && <LeadExportModal onClose={() => setShowExportModal(false)} />}
 
       {/* ADD LEAD MANUALLY MODAL */}
       {showAddLeadModal && (
