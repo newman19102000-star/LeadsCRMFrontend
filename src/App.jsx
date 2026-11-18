@@ -1041,16 +1041,22 @@ export default function App() {
         {activePage === 'crm' ? (
           <ErrorBoundary>
             <CrmDashboard
-              onOpenStage={(stage) => {
-                // Start from clean filters so saved ones don't hide the stage's leads
+              userId={currentUser?.id}
+              canViewAll={canViewAll}
+              isAdmin={isAdmin}
+              // Click-throughs start from clean filters (plus "assigned to me" when the dashboard shows "My leads"),
+              // so the list matches the number that was tapped
+              onOpenStage={(stage, mine) => {
                 setSearchQuery('');
                 setCurrentLeadPage(1);
-                setLeadFilters({ ...EMPTY_LEAD_FILTERS, stage: [stage] });
+                setLeadFilters({ ...EMPTY_LEAD_FILTERS, stage: [stage], mine: !!mine });
                 setActiveLeadTab('all_total');
                 setActivePage('leads');
               }}
-              onOpenTasks={(tab) => {
+              onOpenTasks={(tab, mine) => {
                 setCurrentTaskPage(1);
+                setTaskFilters({ ...EMPTY_TASK_FILTERS, mine: !!mine });
+                setTaskSearchInput('');
                 setActiveTaskTab(tab);
                 setActivePage('tasks');
               }}
@@ -1062,7 +1068,7 @@ export default function App() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
               <div className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4 shadow-xs overflow-hidden">
                 <h2 className="text-[11px] sm:text-xs font-bold uppercase tracking-wider mb-2 sm:mb-3 !text-black">
-  1. {isAdmin || currentUser.canViewAllCompanyLeads ? 'All Company Leads' : 'My Assigned Leads'}
+  1. {canViewAll && !leadFilters.mine ? 'All Company Leads' : 'My Assigned Leads'}
 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
                   {[
@@ -2536,6 +2542,7 @@ export default function App() {
         empty={EMPTY_LEAD_FILTERS}
         dateFields={LEAD_DATE_FIELDS}
         showInactive
+        mineLabel={canViewAll ? 'Only leads assigned to me' : null}
         onApply={setLeadFilters}
         onClose={() => setFilterPanel(null)}
       />
@@ -2549,6 +2556,7 @@ export default function App() {
         empty={EMPTY_TASK_FILTERS}
         dateFields={TASK_DATE_FIELDS}
         datePresets={['today', 'yesterday', 'next7', 'last7', 'last30', 'thisMonth']}
+        mineLabel={canViewAll ? 'Only tasks assigned to me' : null}
         onApply={(f) => setTaskFilters({ ...f, search: taskSearchInput })} // the search box stays the source of truth
         onClose={() => setFilterPanel(null)}
       />

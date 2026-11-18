@@ -10,14 +10,15 @@ import { INACTIVE_CHOICES, countActive, datePreset } from './filterConfig';
 export default function FilterPanel({
   open, title = 'Filters', fields, options, loadingOptions, value, empty, onApply, onClose,
   dateFields, datePresets = ['today', 'yesterday', 'last7', 'last30', 'thisMonth'], showInactive = false, showDate = true,
+  mineLabel = null, // e.g. "Only leads assigned to me" — shown only to users who can see everyone's records
 }) {
   // Mounted only while open, so the draft starts from the applied filters every time it opens.
   if (!open) return null;
-  return <PanelBody {...{ title, fields, options, loadingOptions, value, empty, onApply, onClose, dateFields, datePresets, showInactive, showDate }} />;
+  return <PanelBody {...{ title, fields, options, loadingOptions, value, empty, onApply, onClose, dateFields, datePresets, showInactive, showDate, mineLabel }} />;
 }
 
 function PanelBody({
-  title, fields, options, loadingOptions, value, empty, onApply, onClose, dateFields, datePresets, showInactive, showDate,
+  title, fields, options, loadingOptions, value, empty, onApply, onClose, dateFields, datePresets, showInactive, showDate, mineLabel,
 }) {
   const [draft, setDraft] = useState(value);
   const [openSection, setOpenSection] = useState(null);
@@ -51,6 +52,12 @@ function PanelBody({
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-4 text-sm">
+          {mineLabel && (
+            <label className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2.5 cursor-pointer" data-testid="filter-mine">
+              <span className="text-xs font-semibold text-slate-700">{mineLabel}</span>
+              <input type="checkbox" checked={!!draft.mine} onChange={(e) => set('mine', e.target.checked)} className="w-4 h-4" />
+            </label>
+          )}
           {showDate && (
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">

@@ -17,6 +17,9 @@ export default function FilterChips({ filters, fields, options, dateFields, onCh
   if (filters.inactiveDays) {
     chips.push({ id: 'inactive', text: `No activity ${filters.inactiveDays}+ days`, remove: () => onChange({ ...filters, inactiveDays: null }) });
   }
+  if (filters.mine) {
+    chips.push({ id: 'mine', text: 'Assigned to me', remove: () => onChange({ ...filters, mine: false }) });
+  }
   if (!chips.length) return null;
 
   return (

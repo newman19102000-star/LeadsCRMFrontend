@@ -198,6 +198,7 @@ export default function LeadExportModal({ onClose, currentFilters, fields = [], 
         dateFields={LEAD_DATE_FIELDS}
         showDate={false}
         showInactive
+        mineLabel="Only leads assigned to me"
         onApply={(f) => setFilters(withoutDate(f))}
         onClose={() => setPanelOpen(false)}
       />

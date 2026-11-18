@@ -55,14 +55,15 @@ export const TASK_DATE_FIELDS = [
   { value: 'completed', label: 'Completed date' },
 ];
 
-export const EMPTY_LEAD_FILTERS = { dateField: 'created', dateFrom: '', dateTo: '', inactiveDays: null, sort: 'newest' };
-export const EMPTY_TASK_FILTERS = { search: '', dateField: 'scheduled', dateFrom: '', dateTo: '' };
+export const EMPTY_LEAD_FILTERS = { mine: false, dateField: 'created', dateFrom: '', dateTo: '', inactiveDays: null, sort: 'newest' };
+export const EMPTY_TASK_FILTERS = { mine: false, search: '', dateField: 'scheduled', dateFrom: '', dateTo: '' };
 
-// Number of active filters (lists with values, a date range, inactivity). Sort and search don't count.
+// Number of active filters (lists with values, a date range, inactivity, "assigned to me"). Sort and search don't count.
 export function countActive(filters, fields) {
   let n = fields.filter((f) => (filters[f.key] || []).length > 0).length;
   if (filters.dateFrom || filters.dateTo) n += 1;
   if (filters.inactiveDays) n += 1;
+  if (filters.mine) n += 1;
   return n;
 }
 
@@ -79,6 +80,7 @@ export function toQueryParams(filters, fields) {
     if (filters.dateTo) params.dateTo = filters.dateTo;
   }
   if (filters.inactiveDays) params.inactiveDays = filters.inactiveDays;
+  if (filters.mine) params.mine = true;
   if (filters.sort && filters.sort !== 'newest') params.sort = filters.sort;
   if (filters.search && filters.search.trim()) params.search = filters.search.trim();
   return params;

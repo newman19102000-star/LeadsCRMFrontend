@@ -70,7 +70,7 @@ export const crmApi = {
   logCall: (leadId, payload) => api.post(`/leads/${leadId}/calls`, payload).then(r => r.data),
 
   // Analytics
-  getCrmDashboard: () => api.get('/analytics/crm-dashboard').then(r => r.data),
+  getCrmDashboard: (scope) => api.get('/analytics/crm-dashboard', { params: { scope } }).then(r => r.data),
 
   // Leads Workspace APIs
   getDashboardCounts: (filterParams = {}) => api.get('/leads/dashboard-counts', { params: filterParams }).then(r => r.data),

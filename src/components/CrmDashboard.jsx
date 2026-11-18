@@ -41,22 +41,40 @@ function StageRow({ stage, count, groupTotal, group, onClick }) {
   );
 }
 
-export default function CrmDashboard({ onOpenStage, onOpenTasks }) {
+// "My leads" / "All leads" choice, remembered per user on this device.
+// Workers with view-all permission start on "My leads"; admins start on "All leads".
+function useDashboardScope(userId, canViewAll, isAdmin) {
+  const key = `crm_dashboard_scope_v1_${userId}`;
+  const [scope, setScopeState] = useState(() => {
+    const saved = userId ? localStorage.getItem(key) : null;
+    return saved === 'mine' || saved === 'all' ? saved : (isAdmin ? 'all' : 'mine');
+  });
+  const setScope = (s) => {
+    setScopeState(s);
+    try { localStorage.setItem(key, s); } catch { /* storage disabled */ }
+  };
+  return [canViewAll ? scope : 'mine', setScope];
+}
+
+export default function CrmDashboard({ onOpenStage, onOpenTasks, userId, canViewAll = false, isAdmin = false }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [openGroups, setOpenGroups] = useState(() => new Set());
   const [showEmpty, setShowEmpty] = useState(() => new Set());
+  const [scope, setScope] = useDashboardScope(userId, canViewAll, isAdmin);
+  // Only meaningful for users who could otherwise see everyone's records
+  const mine = canViewAll && scope === 'mine';
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      setData(await crmApi.getCrmDashboard());
+      setData(await crmApi.getCrmDashboard(scope));
     } catch (err) {
       console.error('Failed to load CRM dashboard', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [scope]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -99,13 +117,32 @@ export default function CrmDashboard({ onOpenStage, onOpenTasks }) {
 </div>
           <p className="text-xs text-slate-500 mt-0.5">Tap a tile or stage to open the matching list</p>
         </div>
-        <button
-          onClick={load}
-          className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600"
-          title="Refresh"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {canViewAll && (
+            <div className="inline-flex rounded-lg bg-slate-100 p-0.5 text-xs font-semibold" role="group" aria-label="Show statistics for" data-testid="dashboard-scope">
+              {[['mine', 'My leads'], ['all', 'All leads']].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setScope(value)}
+                  aria-pressed={scope === value}
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-md whitespace-nowrap transition ${
+                    scope === value ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+          <button
+            onClick={load}
+            className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600"
+            title="Refresh"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
       </div>
 
       {/* Tasks: what needs action */}
@@ -115,10 +152,10 @@ export default function CrmDashboard({ onOpenStage, onOpenTasks }) {
           <span className="text-[11px] text-slate-400">{tasks.total} total</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          <TaskTile label="Overdue"   count={tasks.overdue}   tone="bg-rose-50 text-rose-700"       onClick={() => onOpenTasks?.('pending')} />
-          <TaskTile label="Due today" count={tasks.today}     tone="bg-amber-50 text-amber-700"     onClick={() => onOpenTasks?.('today')} />
-          <TaskTile label="Upcoming"  count={tasks.upcoming}  tone="bg-blue-50 text-blue-700"       onClick={() => onOpenTasks?.('upcoming')} />
-          <TaskTile label="Completed" count={tasks.completed} tone="bg-emerald-50 text-emerald-700" onClick={() => onOpenTasks?.('completed')} />
+          <TaskTile label="Overdue"   count={tasks.overdue}   tone="bg-rose-50 text-rose-700"       onClick={() => onOpenTasks?.('pending', mine)} />
+          <TaskTile label="Due today" count={tasks.today}     tone="bg-amber-50 text-amber-700"     onClick={() => onOpenTasks?.('today', mine)} />
+          <TaskTile label="Upcoming"  count={tasks.upcoming}  tone="bg-blue-50 text-blue-700"       onClick={() => onOpenTasks?.('upcoming', mine)} />
+          <TaskTile label="Completed" count={tasks.completed} tone="bg-emerald-50 text-emerald-700" onClick={() => onOpenTasks?.('completed', mine)} />
         </div>
         {byType.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-2.5">
@@ -207,7 +244,7 @@ export default function CrmDashboard({ onOpenStage, onOpenTasks }) {
                         count={s.count}
                         groupTotal={g.total}
                         group={g}
-                        onClick={() => onOpenStage?.(s.stage)}
+                        onClick={() => onOpenStage?.(s.stage, mine)}
                       />
                     ))}
                     {empty.length > 0 && (
